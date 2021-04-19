@@ -1,0 +1,189 @@
+---
+title: "Data Visualization and Google Trends"
+author: "Özlem Şenel"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  warning = FALSE,
+	message = FALSE
+)
+##The libraries
+library(lubridate)
+library(zoo)
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(RColorBrewer)
+library(colorspace)
+
+##The data
+dollar <- read_csv("C:/Users/Asus/Desktop/360hw1/dollar.csv", 
+    col_types = cols(Date = col_date(format = "%Y-%m")))
+dolarnekadar <- read_csv("C:/Users/Asus/Desktop/360hw1/dolarnekadar.csv", 
+    col_types = cols(Date = col_date(format = "%Y-%m")))
+food_production <- read_csv("C:/Users/Asus/Desktop/360hw1/food_production.csv", 
+    col_types = cols(Date = col_date(format = "%Y-%m")))
+gıda <- read_csv("C:/Users/Asus/Desktop/360hw1/gıda.csv", 
+    col_types = cols(Date = col_date(format = "%Y-%m")))
+food_price <- read_csv("C:/Users/Asus/Desktop/360hw1/food_price.csv", 
+    col_types = cols(Date = col_date(format = "%Y-%m")))
+ekmekfiyatı <- read_csv("C:/Users/Asus/Desktop/360hw1/ekmekfiyatı.csv", 
+    col_types = cols(Date = col_date(format = "%Y-%m")))
+
+```
+In this homework, I selected 3 time series data: Exchange rates of US Dollar/Turkish Lira, industrial production index of food industry and consumer price index of food industry. I visualized data and provide plots that shows the distribution of data over years. Further, I determined a relevant search key word and plotted the line plot of the analyzed volume of the key word. I observed the trends of data and correlations between plots. All the series of data are taken from [EVDS](https://evds2.tcmb.gov.tr/index.php) and [Google Trends](https://trends.google.com/trends/?geo=US).
+
+
+# 1- Exchange Rates of US Dollar/Turkish Lira
+This data provides information about the changes in exchange rate of US Dollar and Turkish Lira between January 2011-December 2020. This data is really important because it is fairly related about the country's economy and helps us to interpret more accurately further data in the report. Here it is seen a line plot: 
+
+```{r dollar line, fig.align='center',echo=FALSE}
+line1 <- ggplot(data = dollar,aes(x = Date,y = Dollar))
+line1 + geom_line(color="brown2", size=2)  +  theme_light() + labs(x = "Date",
+       y = "Exchange Rates of US Dollar/Turkish Lira" )
+
+```
+
+Although there are some fluctuations over years, it can be said that there is an increasing trend. If we look at the abnormal observations, the biggest peak is in 2018 and it is related to economic crisis in the country. Other than that, there aren't any big jumps in the plot. For further information there is a box plot for the data:
+
+```{r dollar boxplot, fig.align='center',echo=FALSE}
+years <-  c('2011','2012','2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020')
+dollar$Year <- factor(format(dollar$Date, "%Y"), levels = years)
+                      
+box1 <- ggplot(data = dollar,aes(x = Year,y = Dollar))
+box1 + geom_boxplot(aes(y = Dollar, fill=Year)) +
+  scale_fill_brewer(palette="Set3") + theme_light() + labs(x = "Date",
+       y = "Exchange Rates of US Dollar/Turkish Lira" )
+
+```
+
+It is more clear to see the increasing trend in this plot. Especially after 2014, the trend gains acceleration. The biggest standard deviation belongs to 2018 as we said in the line plot. Also the standard deviation in 2020 is more than others. It is possible that is because of economic decisions that goverments made in that critical year.
+
+Now, let's take a look at the search volume of **'dolar ne kadar'** in Google Trends. Here is a line plot and box plot for the search volume of this word for the dates from January 2011 to December 2020:
+
+```{r dolar, fig.align='center',echo=FALSE}
+line1 <- ggplot(data = dolarnekadar,aes(x = Date,y = Word))
+line1 + geom_line(color="brown2", size=2)  +  theme_light() + labs(x = "Date",y = "Search Volume of the Key Word")
+```
+
+```{r dolar box, fig.align='center',echo=FALSE}
+years <-  c('2011','2012','2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020')
+dolarnekadar$Year <- factor(format(dolarnekadar$Date, "%Y"), levels = years)
+                      
+box4 <- ggplot(data = dolarnekadar,aes(x = Year,y = Word))
+box4 + geom_boxplot(aes(y = Word, fill=Year)) +
+  scale_fill_brewer(palette="Set3") + theme_light() + labs(x = "Date",y = "Search Volume of the Key Word")
+```
+
+It is observed that overall, there is an increasing trend. There is a really big peak in 2018, and there are big fluctuations during 2020. Also, the biggest standard deviation is in 2018, 2019 and 2020. In 2018, there was an economic crisis in the country, and probably its implications continued during 2019. In 2020, the exchange rates were increasing due to several conditions. For conclusion, it is clear that the exchange rate and the search volume of 'dollar' plots are compatible.
+
+# 2- Industrial Production Index of Food Industry 
+
+ The industrial production index (IPI) measures levels of production in the manufacturing, mining, electrical and gas utilities sectors. It also measures capacity, an estimate of the production levels that could be sustainably maintained; and capacity utilization, the ratio of actual output to capacity. The food and clothing industries form most of the IPI. The data that I observed is IPI for food industry in January 2011-December 2020. Here is the line plot for the data:
+
+```{r production line, fig.align='center',echo=FALSE}
+line2 <- ggplot(data = food_production,aes(x = Date,y = Food))
+line2 + geom_line(color="darkolivegreen3", size=2)  +  theme_light() + geom_smooth(color="black", linetype="longdash", se = FALSE) + labs(x = "Date",y = "Industrial Production Index of Food Industry")
+
+```
+
+To see the trend more clear, there is an extra line plot which contains the smoothed data. From the extra line plot, it is observed that there is an increasing trend over years. Also, we can say that there is similarity for each year. Let's take a close look to year 2015 to analyze better:
+
+```{r production line2, fig.align='center', echo=FALSE}
+year_2015 <- food_production[49:60, 1:2]
+                      
+line3 <- ggplot(data = year_2015,aes(x = Date,y = Food))
+line3 + geom_line(color="darkolivegreen3", size=2)  +  theme_light() + labs(x = "Date",y = "Industrial Production Index of Food Industry in 2015")
+```
+
+The line is at the lowest at the beginning of the year and makes a peak towards to the end of the year. There is an increasing trend during the year. The cause of this movement can be tax regulations that are announced at the beginning of the year.
+
+For a further look here is a box plot of the data:
+
+```{r production boxplot, fig.align='center',echo=FALSE}
+years <-  c('2011','2012','2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020')
+food_production$Year <- factor(format(food_production$Date, "%Y"), levels = years)
+                      
+box2 <- ggplot(data = food_production,aes(x = Year,y = Food))
+box2 + geom_boxplot(aes(y = Food, fill=Year)) +
+ scale_fill_brewer(palette="Set3") + theme_light() + labs(x = "Date",y = "Industrial Production Index of Food Industry")
+
+```
+
+From the graph, it can be said that the standard deviations are average every year and the trend is slowly increasing. There aren't any abnormal observations.
+
+Now, let's take a look at the the search volume of the word **'gıda'** in Google Trends. Here is a line plot and box plot for the search volume of this word for the dates from January 2011 to December 2020:
+
+```{r gıda, fig.align='center',echo=FALSE}
+line1 <- ggplot(data = gıda,aes(x = Date,y = Word))
+line1 + geom_line(color="darkolivegreen3", size=2)  +  theme_light() + labs(x = "Date",y = "Search Volume of the Key Word")
+```
+
+```{r gıda box, fig.align='center',echo=FALSE}
+years <-  c('2011','2012','2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020')
+gıda$Year <- factor(format(gıda$Date, "%Y"), levels = years)
+                      
+box5 <- ggplot(data = gıda,aes(x = Year,y = Word))
+box5 + geom_boxplot(aes(y = Word, fill=Year)) +
+  scale_fill_brewer(palette="Set3") + theme_light() + labs(x = "Date",y = "Search Volume of the Key Word")
+
+```
+
+From the graphs, we can observe that there isn't any increasing or decreasing trend for the search volume of 'gıda'. Although, there is an abnormal observation: it accelerates in 2020. The cause of it is probably the pandemic that takes over the world in this year.
+
+It can be said that there isn't any compatibility between the IPI for food industry and the search volume of 'gıda'.
+
+# 3- Consumer Price Index of Food Industry
+
+The Consumer Price Index (CPI) is a measure that examines the weighted average of prices of a basket of consumer goods and services, such as transportation, food, and medical care. It is calculated by taking price changes for each item in the predetermined basket of goods and averaging them. The data that I observed is cPI for food industry in January 2011-December 2020. Here is the line plot for the data:
+
+```{r price line, fig.align='center',echo=FALSE}
+food_price <- read_csv("C:/Users/Asus/Desktop/360hw1/food_price.csv", 
+    col_types = cols(Date = col_date(format = "%Y-%m")))
+
+line3 <- ggplot(data = food_price,aes(x = Date,y = Price))
+line3 + geom_line(color="aquamarine4", size=2)  +  theme_light()+ labs(x = "Date",y = "Consumer Price Index of Food Industry")  
+```
+
+It is observed that the CPI for food industry has an increasing trend over years. There isn't a big peak or sudden fall but we can say that it accelerates very quickly after 2016. The main cause of the acceleration can be the exchange rates of US Dollar and Turkish Lira and the loss of value that happened to Turkish Lira. To observe more detailed here is a boxplot of data:
+
+```{r price boxplot, fig.align='center',echo=FALSE}
+years <-  c('2011','2012','2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020')
+food_price$Year <- factor(format(food_price$Date, "%Y"), levels = years)
+                      
+box3 <- ggplot(data = food_price,aes(x = Year,y = Price))
+box3 + geom_boxplot(aes(y = Price, fill=Year)) +
+  scale_fill_brewer(palette="Set3") + theme_light()+ labs(x = "Date",y = "Consumer Price Index of Food Industry")
+```
+
+From the graph, it is clear that there is an increasing trend that accelerates over years. The biggest standard deviation is in 2018 and the cause of it is the economic crisis in the country. 
+
+Now, let's take a look at the the search volume of **'ekmek fiyatı'** in Google Trends. Here is a line plot and box plot for the search volume of this word for the dates from January 2011 to December 2020:
+
+```{r ekmek, fig.align='center',echo=FALSE}
+line1 <- ggplot(data = ekmekfiyatı,aes(x = Date,y = Word))
+line1 + geom_line(color="aquamarine4", size=2)  +  theme_light() + labs(x = "Date",y = "Search Volume of the Key Word")
+```
+
+```{r ekmek box, fig.align='center',echo=FALSE}
+years <-  c('2011','2012','2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020')
+ekmekfiyatı$Year <- factor(format(ekmekfiyatı$Date, "%Y"), levels = years)
+                      
+box6 <- ggplot(data = ekmekfiyatı, aes(x = Year,y = Word))
+box6 + geom_boxplot(aes(y = Word, fill=Year)) +scale_fill_brewer(palette="Set3") + theme_light() + labs(x = "Date",y = "Search Volume of the Key Word")
+```
+
+There is an increasing trend over the years but the fluctuations are getting bigger. The biggest standard deviation is in 2018 and 2020. As I said before, there was an economic crisis in 2018 and 'ekmek' seems one of the most essential and economical food for most Turkish family to reduce the hunger. Also, in 2020, during the pandemic, people started to bake their own breads in home. These are may be the cause of this standard deviations.
+
+It can be said that there is a compatibility between the CPI for food industry and the search volume of 'ekmek fiyatı'. Because they are both has an increasing trend.
+
+
+In order to have a better observation, you can reach  my RMarkdown file from [here](https://bu-ie-360.github.io/spring21-OzlemSenel/Files/360hw1.Rmd).
+
+## References
++ [EVDS](https://evds2.tcmb.gov.tr/index.php)
++ [Google Trends](https://trends.google.com/trends/?geo=US)
++ [Information for IPI](https://www.investopedia.com/terms/i/ipi.asp#:~:text=The%20industrial%20production%20index%20(IPI)%20measures%20levels%20of%20production%20and,the%20end%20of%20every%20March.)
++ [Information for CPI](https://www.investopedia.com/terms/c/consumerpriceindex.asp)
