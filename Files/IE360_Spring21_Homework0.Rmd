@@ -1,0 +1,53 @@
+---
+title: "Interesting Forecasting Applications with R"
+author: "Özlem Şenel - IE360 - Spring 2021"
+---
+
+```{r,echo=FALSE,results="hide"}
+library(knitr)
+opts_chunk$set(tidy.opts=list(width.cutoff=60),tidy=TRUE)
+```
+
+```{r,echo=FALSE,eval=FALSE}
+rmarkdown::render("/home/baydogan/Courses/IE360/Guidelines/example_homework_0.Rmd",output_format="pdf_document")
+rmarkdown::render("/home/baydogan/Courses/IE360/Guidelines/example_homework_0.Rmd",output_format="html_document")
+```
+
+1.  [Time series forecasting using ARIMA models](https://blogs.oracle.com/datascience/introduction-to-forecasting-with-arima-in-r)
+
+    This example is important because it introduces the forecasting methodology using ARIMA models in R. The steps are:
+    * loading R packages
+    * Examining the data
+    * Decomposing the data
+    * Stationarity
+    * Autocorrelations and choosing model order
+    * Fitting an ARIMA model
+    * Evaluation and iteration
+    
+2.  [Time series forecasting using simple exponential smoothing](https://towardsdatascience.com/simple-exponential-smoothing-749fc5631bed)
+
+    A simple exponential smoothing is one of the simplest ways to forecast a time series. The basic idea of this model is to assume that the future will be more or less the same as the (recent) past. The only pattern that this model will be able to learn from demand history is its level.
+    The level is the average value around which the demand varies over time. The level is a smoothed version of the demand.
+    The exponential smoothing model will then forecast the future demand as its last estimation of the level. It is essential to understand that there is no definitive mathematical definition of the level. Instead, it is up to our model to estimate it.
+
+3. [Time series forecasting using moving average smoothing](https://machinelearningmastery.com/moving-average-smoothing-for-time-series-forecasting-python/#:~:text=Moving%20averages%20are%20a%20simple,in%20the%20original%20time%20series.)
+
+    Moving averages are a simple and common type of smoothing used in time series analysis and time series forecasting.
+    Calculating a moving average involves creating a new series where the values are comprised of the average of raw observations in the original time series.
+    A moving average requires that you specify a window size called the window width. This defines the number of raw observations used to calculate the moving average value.
+    The “moving” part in the moving average refers to the fact that the window defined by the window width is slid along the time series to calculate the average values in the new series.
+    
+4. [Time series forecasting using SARIMA models](https://machinelearningmastery.com/sarima-for-time-series-forecasting-in-python/)
+
+    Seasonal Autoregressive Integrated Moving Average, SARIMA or Seasonal ARIMA, is an extension of ARIMA that explicitly supports univariate time series data with a seasonal component.
+    It adds three new hyperparameters to specify the autoregression (AR), differencing (I) and moving average (MA) for the seasonal component of the series, as well as an additional parameter for the period of the seasonality.
+    
+5.  [Time series forecasting using TBATS model](https://www.pluralsight.com/guides/time-series-forecasting-using-r)
+
+    The TBATS model combines several components of the different techniques, which makes it a very good choice for forecasting.
+    It constitutes the following elements:
+    * Trigonometric terms for seasonality
+    * Box-Cox transformations for heterogeneity
+    * ARMA errors for short-term dynamics
+    * Trend
+    * Seasonal (including multiple and non-integer periods)
