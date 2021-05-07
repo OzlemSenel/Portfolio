@@ -1,0 +1,220 @@
+---
+title: "Prediction with Time Series Regression"
+author: "Özlem Şenel"
+---
+
+```{r setup, echo=FALSE, message=FALSE, warning=FALSE}
+library(ggplot2)
+library(readr)
+library(data.table)
+library (zoo)
+library(lubridate)
+library(dplyr)
+library(RColorBrewer)
+library(colorspace)
+library(ggcorrplot)
+library(GGally)
+library(forecast)
+library(ggcorrplot)
+library(tibble)
+
+hw2data <- read_csv("C:/Users/Asus/Desktop/hw2data.csv", col_types = cols(Date = col_date(format = "%Y-%m"), Sales = col_number()))
+setDT(hw2data)
+```
+
+In this homework, I will create a fitted time series regression model and make a forecast at a monthly level. For this assignment, I will work with 'Total House Sales Statistics in Turkey' data. Every data that I observed for this assignment is taken from [EVDS](https://evds2.tcmb.gov.tr/index.php).
+
+## Introduction
+To achieve a fitted time series regression model, there are many steps to complete. As I said before, I will work with 'Total House Sales Statistics in Turkey' data from January 2013 to March 2021. First and foremost, the data should be analyzed carefully. Therefore, I formed a line plot and box plot of the data to make more reasonable decisions. Let's look at the plots:
+
+```{r lineplot, fig.align='center',echo=FALSE, message=FALSE, warning=FALSE}
+plot <- ggplot(data = hw2data,aes(x = Date,y = Sales))
+plot + geom_line(color="brown2", size=2)  +  theme_light() + labs(x = "Years",
+       y = "Total House Sales in Turkey") + geom_smooth(color="black", linetype="longdash", se = FALSE)
+```
+
+```{r boxplot, fig.align='center',echo=FALSE, message=FALSE, warning=FALSE}
+years <-  c('2011','2012','2013', '2014', '2015', '2016', '2017', '2018', '2019', '2020', '2021')
+hw2data$Year <- factor(format(hw2data$Date, "%Y"), levels = years)
+                      
+box <- ggplot(data = hw2data,aes(x = Year,y = Sales))
+box + geom_boxplot(aes(y = Sales, fill=Year)) +
+  scale_fill_brewer(palette="Set3") + theme_light() + labs(x = "Years",
+       y = "Total House Sales in Turkey")
+```
+
+From the smoothed and dashed line plot, one can say that there isn't a significant decrease or increase in the trend. But especially from the box plot, it is clear that the variance is increasing from year to year. Especially, in 2019 and 2020 the variance is very large from previous years. In 2021, the variance doesn't seem large but there is only 3 month of data in that year. Also, it can be observed that there is seasonality. The graph is at lowest at the beginning of every year, it's increasing later that year and achieve its highest point nearly at the end of the year. And, it decreases suddenly at the beginning of next year which is probably from tax regulations.
+
+There are several points that are important: To decrease the rise of deviation, I should take the squareroot of the sales statistics.(As an extra information, I also took the logarithm of the data to observe, but the model that is created with squareroot that I will explain later in the assignment was more compatible with the actual data.) Since there isn't a significant trend, I don't have to add the trend variable into the model. Although, I should add the seasonality variable since there is a significant increasing trend in every year. 
+
+Let's take a look at the data that is taken the squareroot of the House Sales Statistics:
+
+```{r square root, fig.align='center', echo=FALSE, message=FALSE, warning=FALSE}
+hw2data$Sales <- sqrt(hw2data$Sales)
+
+plot <- ggplot(data = hw2data, aes(x = Date,y = Sales))
+plot + geom_line(color="brown2", size=2)  +  theme_light() + labs(x = "Years",
+       y = "Squareroot of Total House Sales in Turkey")+ geom_smooth(color="black", linetype="longdash", se = FALSE)
+
+```
+
+The deviation is significantly decreased in this form. We can proceed with this data.
+
+## Selecting Relevant Predictors For Model
+
+I selected 8 data from EVDS that can be useful for my model. The series that I selected for this are right below. From now on, I will use the words at the beginning of the lines for that series:
+
++ "Dollar": Exchange Rates of US Dollar/Turkish Lira
++ "Loan": Weighted Average Interest Rates For Banks Loans as Percentages
++ "Furniture": Domestic Producer Price Index of Furniture
++ "FSH": Financial Situation of Household Survey (present compared to the last 12 months)
++ "GES": General Economic Situation Survey (Present compared to the past 12 months)
++ "PSMHI": The Probability of Spending Money on Home Improvements or Renovations Survey (over the next 12 months)
++ "Buying": The Probability of Buying or Building a Home Survey (over the next 12 months)
++ "Automobile": Production of Automobiles
+
+Let's take a close look to these series. There are plots of each of them with the addition of plot of the squareroot of house sales: 
+
+```{r correlation, fig.align='center', echo=FALSE, message=FALSE, warning=FALSE}
+ts_data <- hw2data[,-c(1)]
+ts_data <- ts_data[,-c(10)] 
+ts_data <- ts(ts_data,freq=12,start=c(2013,1))
+ 
+plot(zoo(ts_data), cex=1.5, main="Possible Relevant Predictors", xlab="Time", ylab = c("Sales", "Dollar","Loan","Furniture","FSH", "GES","PSMHI", "Buying", "Automobile"))
+```
+
+It can be hard to understand the correlations and make selections from line plots. So, I  created a correlation matrix:
+
+```{r correlation matrix, fig.align='center', echo=FALSE, message=FALSE, warning=FALSE}
+ggcorrplot(corr = cor(ts_data),hc.order = TRUE, type = "upper",lab = TRUE, title = "Correlation Matrix", colors = c("darkolivegreen1","darkolivegreen3","darkolivegreen4"), show.legend = FALSE)
+```
+
+It can be seen that there aren't many strong correlations between the squareroot of sales and other series. The 3 strongest correlations are with Automobile, PSMHI and Buying series. I can add these series to my model for now. 
+
+## Creating The Model
+I took the squareroot of my data and selected the relevant predictors that can help me. Now, it's time to fit the model. First of all, let's look at the summary and residuals of the initial model:
+
+```{r regression1, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE}
+sales=data.table(root_sales=as.numeric(hw2data$Sales))
+sales=cbind(sales,Automobile=as.numeric(hw2data$Automobile))
+sales=cbind(sales,PSMHI=as.numeric(hw2data$PSMHI))
+sales=cbind(sales,Buying=as.numeric(hw2data$Buying))
+fit <- lm(root_sales ~ Automobile + PSMHI + Buying, data=sales)
+summary(fit)
+checkresiduals(fit)
+```
+
+The p-value is really small which is a good thing for my model, but I need to improve the R-squared value. To make a better model, first I should add the seasonality variable as I mentioned above. For that reason, I'm adding month variable.
+
+
+```{r regression2, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE}
+month=seq(1,12,by=1)
+sales=cbind(sales,month)
+fit2 <- lm(root_sales ~ + as.factor(month) + Automobile + PSMHI + Buying, data=sales)
+summary(fit2)
+checkresiduals(fit2)
+```
+
+There are some problems in the as.factor(month) coefficients that can be caused by the intercept coefficient. It will be wise to remove the intercept at the next step. 
+
+Also, there are some outliers in data. These are mostly from 2020. Probably, the reason of this points are the conditions in the world during this year which is an extraordinary case. Therefore, I need to add outlier variables. The outliers are the ones below the minimum and above the maximum.To find outliers, I used these formulas :
+for small outliers: Q1 - 1.5 * IQR
+for big outliers: Q3 + 1.5 * IQR
+
+Also, I made a box plot to see the number of outliers.
+ 
+```{r boxplot2, fig.align='center', echo=FALSE, message=FALSE, warning=FALSE}
+box1 <- ggplot(data = hw2data,aes(x = Date, y = Sales))
+box1 + geom_boxplot(aes(y = Sales), fill = "lightskyblue1") + theme_light() + labs(main = "Squareroot of Total House Sales in Turkey")
+```
+
+```{r regression3, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE}
+sales1=data.table(root_sales=as.numeric(hw2data$Sales))
+#summary(sales1)
+sales[root_sales> 402.9 ,big_outlier:= 1]
+sales[root_sales< 250.1 ,small_outlier:= 1]
+sales[is.na(big_outlier)==T,big_outlier:=0]
+sales[is.na(small_outlier)==T,small_outlier:=0]
+fit3 <- lm(root_sales ~ -1 + as.factor(month) + big_outlier + small_outlier + Automobile + PSMHI + Buying, data=sales)
+summary(fit3)
+checkresiduals(fit3)
+```
+
+Now, the p-value is really small and adjusted R-squared value is getting bigger which is very good for the model. But from ACF, one can say that the autocorrelation at lag 7 and at lag14 are relatively bigger than others. I added lag7 and lag14 variables to fix that.
+
+Last but not least, I removed the Buying series from my coefficients because the p-value for that wasn't small enough to improve the model.
+
+
+```{r regression4, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE}
+lag7=shift(residuals(fit3),7)
+sales=cbind(sales,lag7)
+sales[is.na(lag7)==T,lag7:=0]
+lag14=shift(residuals(fit3),14)
+sales=cbind(sales,lag14)
+sales[is.na(lag14)==T,lag14:=0]
+fit4 <- lm(root_sales ~ -1 + as.factor(month) + lag7  + lag14 + big_outlier + small_outlier + Automobile + PSMHI, data=sales)
+summary(fit4)
+checkresiduals(fit4)
+```
+I checked the summary of the model and the plots of the residuals and I'm really pleased with my final model. Now, I can provide my forecast.
+
+## Forecasting the Next Month
+
+Before the forecasting, let's take a look at the line plots of my model and actual values. First of all there are squareroots of predicted values and actual values. In the second plot, I squared the values. It's clear that there is similarity between two values. It proves that my model is good enough to forecast.
+
+```{r plots, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE}
+sales[,fitted:=fitted(fit4)]
+sales[,Date:=hw2data$Date]
+
+cols <- c("predicted" = "chartreuse", "actual" = "violetred")
+ggplot() + geom_line(data = sales, aes(x = Date, y = fitted,color = "predicted")) +
+  geom_line(data = sales, aes(x = Date, y = root_sales,color = "actual")) +
+  xlab('Date') + ylab('Squareroot of Sales') + scale_color_manual(values = cols) +  theme_light()
+
+sales[,predicted_sales:=(fitted)^2]
+sales[,actual_sales:=(root_sales)^2]
+
+ggplot() + geom_line(data = sales, aes(x = Date, y = predicted_sales,color = "predicted")) + geom_line(data = sales, aes(x = Date, y = actual_sales,color = "actual")) + xlab('Date') + ylab('Sales') + scale_color_manual(values = cols)+  theme_light()
+```
+
+Lastly, I make prediction for next month. I added a new row, and predicted the relevant variables to make prediction.
+
+My prediction for total house sales for next month is: 
+
+```{r prediction, echo=FALSE, fig.align='center', message=FALSE, warning=FALSE}
+month_info <- c(4)
+sales=rbind(sales,data.table(month=as.factor(month_info)),fill=T)
+#predict(sales$Automobile)
+sales[is.na(Automobile)==T, Automobile:= 75673.59]
+#predict(sales$PSMHI)
+sales[is.na(PSMHI)==T, PSMHI:= 32.32113]
+#predict(sales$lag7)
+sales[is.na(lag7)==T, lag7:= 0.06205968]
+#predict(sales$lag14)
+sales[is.na(lag14)==T, lag14:= -0.3309265]
+sales[is.na(small_outlier)==T,small_outlier:=0]
+sales[is.na(big_outlier),big_outlier:=0]
+#predict(fit4,sales[is.na(fitted)==T])
+predict(fit4,sales[is.na(fitted)==T])^2
+sales[is.na(fitted)==T,fitted:=predict(fit4,sales[is.na(fitted)==T])]
+```
+
+According to my model, there will be 103693 house sales in Turkey in  April 2021.
+
+
+## Conclusion
+
+In this assignment, I made a time series regression for my selected data and made forecast for the next month. 
+
+First of all, I made squareroots of the data, I selected relevant predictors to the model, I added necessary variables to improve my model. My R-squared value was  increasing as I work with the model.After my model is good enough for forecasting, I predicted the April value with my model.
+
+
+You can reach my related code from [here]().
+
+
+
+
+
+
+
+
