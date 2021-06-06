@@ -11,3 +11,7 @@
 ## Homework 2 (7 May 2021)
 
 [Here](Files/IE360_hw2) is my forecasting with time series regression.
+
+## Homework 3 (6 June 2021)
+
+[Here](Files/hw3_360) is my forecasting with AR and MA models.
