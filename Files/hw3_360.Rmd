@@ -1,0 +1,257 @@
+---
+title: "HW 3"
+author: "Özlem Şenel"
+output: html_document
+---
+```{r setup, echo=FALSE, message=FALSE, warning=FALSE}
+
+library(fpp)
+library(xts)
+library(gridExtra)
+library(MLmetrics)
+library(dplyr)
+require(data.table)
+require(readr)
+require(lubridate)
+require(zoo)
+require(forecast)
+require(ggplot2)
+require(urca)
+library(tibble)
+data_path='C:/Users/Asus/Downloads/consumption.csv'
+data_path2='C:/Users/Asus/Downloads/actual.csv'
+
+consumption=fread(data_path)
+#head(consumption,25)
+consumption[,datetime:=ymd(Date)+dhours(Hour)]
+consumption[,Date:=as.Date(Date)]
+#head(consumption,25)
+
+actual=fread(data_path2)
+actual[,datetime:=ymd(Date)+dhours(Hour)]
+actual[,Date:=as.Date(Date)]
+daily_actual=actual[,list(avg_actual=mean(Consumption)),by=list(Date)]
+daily_actual[,Date:=as.Date(Date)]
+```
+
+In this homework, I will create an ARIMA model and make a forecast at a daily level. For this assignment, I will work with 'Hourly Electric Consumption in Turkey' data. Every data that I observed for this assignment is taken from [EPİAŞ](https://seffaflik.epias.com.tr/transparency/tuketim/gerceklesen-tuketim/gercek-zamanlituketim.xhtml).
+
+## Introduction
+
+First of all, let's plot the data and observe it. The data that I plotted is from 1st of January, 2016 to the 6th of May, 2021. The trends and seasonalities should be observed very carefully in first step.
+
+```{r plot hourly, echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(consumption,aes(x=datetime,y=Consumption)) + geom_line(color="brown2") +  theme_light()+labs(x = "Years",
+       y = "Hourly Consumption")
+
+```
+
+As it can be seen, there are many up and downs in series. First of all, it can be said that there is yearly seasonality. Also, there are some outliers in the plot, too. I believe that these outliers are religious and national holidays. 
+
+To observe better, we should look to the plot more detailed. Here is a plot of data from 1st of January, 2021 to the 7th of January, 2021.
+
+```{r plot daily, echo=FALSE, message=FALSE, warning=FALSE}
+ggplot(consumption[Date<='2020-01-07' & Date>='2020-01-01'] ,aes(x=datetime,y=Consumption)) + geom_line(color="darkolivegreen4") +  theme_light()+labs(x = "1st week of 2021",
+       y = "Consumption")
+
+```
+
+It is clear that, there is also daily seasonality. There is more consumption in the middle of the day -in business hours-.
+There may be other seasonalities in data like weekly or monthly seasonalities. To observe other seasonalities better, I plotted above 'Daily Electric Consumption in Turkey'. I took average of consumption in the day for this case.
+
+```{r plots, echo=FALSE, message=FALSE, warning=FALSE}
+daily_series=consumption[,list(avg_consumption=mean(Consumption)),by=list(Date)]
+#head(daily_series)
+daily_series[,Date:=as.Date(Date)]
+
+ggplot(daily_series ,aes(x=Date,y=avg_consumption)) + geom_line(color="darkorchid4") +  theme_light()+labs(x = "Years",
+       y = "Daily Consumption" )+  geom_smooth(color="black", linetype="longdash", se = FALSE)
+
+```
+ 
+I will proceed with this time series to make thing easier in the future. Further of observation, the variance doesn't change too much but there is an obvious decreasing trend in 2020 because of pandemic conditions and the trend increases in 2021 as restrictions decrease.
+
+So far, I observed weekly and yearly seasonalities. To ensure that, I made Box-Ljung Test for lag 7 and lag 365. The test results prove these seasonalities. 
+
+```{r tests, echo=FALSE, message=FALSE, warning=FALSE}
+Box.test(daily_series$avg_consumption,lag=7,type="Ljung-Box")
+Box.test(daily_series$avg_consumption,lag=365,type="Ljung-Box")
+
+
+```
+
+
+## Decomposition
+
+Now that I'm sure that there is weekly seasonality, I can made time series in frequency 7. Here is my plot and ACF of time series. 
+
+```{r acf, echo=FALSE, message=FALSE, warning=FALSE}
+#consumption
+tsconsumption<-ts(daily_series$avg_consumption,freq=7, start=c(1,3))
+#tsconsumption
+#ts.plot(tsconsumption)
+acf <- ggAcf(tsconsumption, lag.max=400, col = "chocolate4") +  xlab('Lags') + ylab('ACF') + theme_light() 
+grid.arrange(acf)
+
+```
+
+However, to make an ARIMA model, my data should be stationary and autocorrelation is very visible in series. I should decompose the series. As I observed earlier, the variance doesn't change too much. So, I can use **"additive"** type of decomposition. Then, I will decompose my series. To achieve that, I will remove seasonality and trend series from my time series.
+
+
+```{r decomposition, echo=FALSE, message=FALSE, warning=FALSE}
+tsconsumption_dec<-decompose(tsconsumption,type="additive")
+plot(tsconsumption_dec)
+
+seasonal<- tsconsumption_dec$seasonal
+deseasonalize<-tsconsumption-seasonal
+
+tsdeseasonalize <- ts(deseasonalize, start = c(2016,153), frequency = 365)
+plot1 <- autoplot(tsdeseasonalize, col = "black")+  
+  theme_light()
+plot3 <- ggAcf(deseasonalize, lag.max=400,  col = "black") + theme_light()
+
+grid.arrange(plot1, plot3)
+
+trend <- tsconsumption_dec$trend
+random <- tsconsumption_dec$random
+detrend<-deseasonalize-trend
+
+tsdetrend <- ts(detrend, start = c(2016, 153), frequency = 365)
+plot2 <- autoplot(tsdetrend, col = "black")+  
+  theme_light()
+
+plot4 <- ggAcf(detrend, lag.max=400,  col = "black") +  theme_light()
+grid.arrange(plot2, plot4)
+```
+
+Here is my random series that I will work on. To make sure that series is random, I made KPPS Unit Root Test. The value of test-statistic is small enough to say that my series is random.
+
+
+```{r random, echo=FALSE, message=FALSE, warning=FALSE}
+ts.plot(tsconsumption_dec$random, main = "Random Series")
+summary(ur.kpss(detrend))
+```
+
+
+## Creating Model
+
+Now, I decomposed and obtained random series. To create my model, Let's take a look at ACF and PACF of series more detailed. 
+
+```{r choose, echo=FALSE, message=FALSE, warning=FALSE}
+plot5 <- ggAcf(detrend, lag.max=15,  col = "darkolivegreen4") +  
+  theme_light()
+plot6 <- ggAcf(detrend, lag.max=15,  col = "darkolivegreen4", type=c("partial")) +  
+  theme_light()
+grid.arrange(plot5, plot6)
+```
+
+
+For a better model, I should choose my **'p'** when there is a significant spike at lag p in the PACF, but none beyond lag p. Also, I should choose my **'q'** when there is a significant spike at lag q in the ACF, but none beyond lag q.
+
+First of all, I will try lag 2 for p because it matches with description and say that d and q are 0.
+After that, I I will try lag 3 for q and say that p and d are 0. Here it is seen AIC and BIC values at the end  of each try. Smaller AIC and BIC values mean that model is better.
+
+Lastly, I can combine two models to get a better one.
+
+```{r try, echo=FALSE, message=FALSE, warning=FALSE}
+
+
+library(stats)
+model1 <- arima(detrend, order=c(2,0,0))
+print(model1)
+AIC(model1)
+BIC(model1)
+model2 <- arima(detrend, order=c(0,0,3))
+print(model2)
+AIC(model2)
+BIC(model2)
+
+model <- arima(detrend, order=c(2,0,3))
+print(model)
+AIC(model)
+BIC(model)
+
+```
+
+The last model is pretty good. However, I will use auto.arima function to make sure that there is no better model.
+
+```{r model, echo=FALSE, message=FALSE, warning=FALSE}
+
+fitted=auto.arima(detrend, seasonal=FALSE, trace=T)
+fitted
+```
+
+This model isn't better than mine. I can proceed with my original model -(2,0,3)-. 
+
+## Prediction
+
+I created my model. Let's take a look of my fitted data and actual data to see how similar they are. Firstly, there is a plot of random series of both data. Secondly, there is a plot of actual data  with seasonality and trend. The light blue series is actual data and the red series is fitted data. As it can be observed, the series are pretty similar and I can make prediction.
+
+```{r plot, echo=FALSE, message=FALSE, warning=FALSE}
+fitted <- random - residuals(model)
+fitted_actual <- fitted+trend+seasonal
+both <- cbind(random, fitted)
+#view(fitted_actual)
+
+plot(random, xlab = "Weeks",main="Plot of Random Series", col="cyan2")
+points(fitted, type = "l", col = "brown2")
+
+
+plot(tsconsumption, xlab = "Weeks",main="Plot of Actual Series",col="cyan2")
+points(fitted_actual, type = "l", col = "brown2")
+
+```
+
+Here is my predictions for the next 14 days:
+
+
+```{r prediction, echo=FALSE, message=FALSE, warning=FALSE}
+predicted <- predict(model, n.ahead = 14)$pred
+predicted <- ts(predicted,frequency = 365,start=c(2021,127))
+#predicted
+
+last_trend <-tail(trend[!is.na(trend)],1)
+last_trend
+seasonality <- seasonal[127:140]
+predicted_actual <- predicted+last_trend+seasonality
+(predicted_actual)
+
+```
+
+To see how good is my model, I plotted my predictions and real values. However, the prediction of my model isn't very good between 12 and 15th May. The reason of that is these days are religious holidays. Prediction for other days seem pretty good.
+
+```{r outliers, echo=FALSE, message=FALSE, warning=FALSE}
+fourteendays <- as.Date(as.Date("2021-05-07"):as.Date("2021-05-20"))
+
+myvalues <- xts(x = data.frame(predicted_actual, daily_actual$avg_actual), order.by = fourteendays, frequency = 7)
+colnames(myvalues) <- c("Prediction", "Real Values")
+plot(myvalues, main = "Predictions and Real Values", legend.loc = "bottomleft")
+
+```
+
+Also, I can take a look at mean absolute errors and weighted mean absolute percentage errror. Here is the plot of these mean absolute error values and weighted mape:
+
+```{r final, echo=FALSE, message=FALSE, warning=FALSE}
+mae <- data.frame( (abs(myvalues$Prediction- daily_actual$avg_actual)/daily_actual$avg_actual), fourteendays)
+names(mae)<- c("MeanAbsoluteErrors", "Date")
+plotmae <- ggplot(mae , aes(x= Date , y=MeanAbsoluteErrors)) 
+
+plotmae +  geom_line(color="brown2") +  theme_light()+ labs(title= "Mean Absolute Errors",x= "Days")
+weighted_mape <- sum((mae$MeanAbsoluteErrors*100*daily_actual$avg_actual)/ sum(daily_actual$avg_actual))
+
+print(paste(" Weighted Mean Absolute Percentage Error : ",weighted_mape))
+
+
+```
+
+
+## Conclusion
+
+I decomposed my series and created an ARIMA model. After that, I predicted next 14 days. Looking at my predictions and my error values, I did a good job except religious holidays. You can reach my related code from [here](https://bu-ie-360.github.io/spring21-OzlemSenel/Files/hw3_360.Rmd).
+
+
+## References
+
++ Slides of 'Time Series Models' by Mustafa Gökçe Baydoğan
++ PS6 Codes
+
