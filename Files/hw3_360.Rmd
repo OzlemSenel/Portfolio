@@ -57,7 +57,7 @@ ggplot(consumption[Date<='2020-01-07' & Date>='2020-01-01'] ,aes(x=datetime,y=Co
 ```
 
 It is clear that, there is also daily seasonality. There is more consumption in the middle of the day -in business hours-.
-There may be other seasonalities in data like weekly or monthly seasonalities. To observe other seasonalities better, I plotted above 'Daily Electric Consumption in Turkey'. I took average of consumption in the day for this case.
+There may be other seasonalities in data as I observed like weekly seasonalities. To observe other seasonalities better, I plotted above 'Daily Electric Consumption in Turkey'. I took average of consumption in the day for this case.
 
 ```{r plots, echo=FALSE, message=FALSE, warning=FALSE}
 daily_series=consumption[,list(avg_consumption=mean(Consumption)),by=list(Date)]
@@ -83,7 +83,7 @@ Box.test(daily_series$avg_consumption,lag=365,type="Ljung-Box")
 
 ## Decomposition
 
-Now that I'm sure that there is weekly seasonality, I can made time series in frequency 7. Here is my plot and ACF of time series. 
+Now that I'm sure that there is weekly seasonality, I can make my daily time series in frequency 7. Here is my plot and ACF of time series. 
 
 ```{r acf, echo=FALSE, message=FALSE, warning=FALSE}
 #consumption
@@ -211,7 +211,7 @@ predicted <- ts(predicted,frequency = 365,start=c(2021,127))
 #predicted
 
 last_trend <-tail(trend[!is.na(trend)],1)
-last_trend
+#last_trend
 seasonality <- seasonal[127:140]
 predicted_actual <- predicted+last_trend+seasonality
 (predicted_actual)
@@ -247,7 +247,9 @@ print(paste(" Weighted Mean Absolute Percentage Error : ",weighted_mape))
 
 ## Conclusion
 
-I decomposed my series and created an ARIMA model. After that, I predicted next 14 days. Looking at my predictions and my error values, I did a good job except religious holidays. You can reach my related code from [here](https://bu-ie-360.github.io/spring21-OzlemSenel/Files/hw3_360.Rmd).
+I decomposed my series and created an ARIMA model. After that, I predicted next 14 days. Looking at my predictions and my error values, I did a good job except religious holidays.
+
+You can reach my related code from [here](https://bu-ie-360.github.io/spring21-OzlemSenel/Files/hw3_360.Rmd).
 
 
 ## References
