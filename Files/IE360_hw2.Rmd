@@ -1,6 +1,7 @@
 ---
 title: "Prediction with Time Series Regression"
 author: "Özlem Şenel"
+output: pdf_document
 ---
 
 ```{r setup, echo=FALSE, message=FALSE, warning=FALSE}
