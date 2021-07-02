@@ -20,4 +20,4 @@
 
 [Here](Files/Latest-File (1)) is our project.
 
-[Here](Files/Latest File (2)) is the code of our project.
+[Here](Files/Latest File (2).Rmd) is the code of our project.
