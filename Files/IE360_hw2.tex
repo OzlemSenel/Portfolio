@@ -1,0 +1,422 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{lmodern}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={Prediction with Time Series Regression},
+  pdfauthor={Özlem Şenel},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+
+\title{Prediction with Time Series Regression}
+\author{Özlem Şenel}
+\date{}
+
+\begin{document}
+\maketitle
+
+In this homework, I will create a fitted time series regression model
+and make a forecast at a monthly level. For this assignment, I will work
+with `Total House Sales Statistics in Turkey' data. Every data that I
+observed for this assignment is taken from
+\href{https://evds2.tcmb.gov.tr/index.php}{EVDS}.
+
+\hypertarget{introduction}{%
+\subsection{Introduction}\label{introduction}}
+
+To achieve a fitted time series regression model, there are many steps
+to complete. As I said before, I will work with `Total House Sales
+Statistics in Turkey' data from January 2013 to March 2021. First and
+foremost, the data should be analyzed carefully. Therefore, I formed a
+line plot and box plot of the data to make more reasonable decisions.
+Let's look at the plots:
+
+\begin{center}\includegraphics{IE360_hw2_files/figure-latex/lineplot-1} \end{center}
+
+\begin{center}\includegraphics{IE360_hw2_files/figure-latex/boxplot-1} \end{center}
+
+From the smoothed and dashed line plot, one can say that there isn't a
+significant decrease or increase in the trend. But especially from the
+box plot, it is clear that the variance is increasing from year to year.
+Especially, in 2019 and 2020 the variance is very large from previous
+years. In 2021, the variance doesn't seem large but there is only 3
+month of data in that year. Also, it can be observed that there is
+seasonality. The graph is at lowest at the beginning of every year, it's
+increasing later that year and achieve its highest point nearly at the
+end of the year. And, it decreases suddenly at the beginning of next
+year which is probably from tax regulations.
+
+There are several points that are important: To decrease the rise of
+deviation, I should take the squareroot of the sales statistics.(As an
+extra information, I also took the logarithm of the data to observe, but
+the model that is created with squareroot that I will explain later in
+the assignment was more compatible with the actual data.) Since there
+isn't a significant trend, I don't have to add the trend variable into
+the model. Although, I should add the seasonality variable since there
+is a significant increasing trend in every year.
+
+Let's take a look at the data that is taken the squareroot of the House
+Sales Statistics:
+
+\begin{center}\includegraphics{IE360_hw2_files/figure-latex/square root-1} \end{center}
+
+The deviation is significantly decreased in this form. We can proceed
+with this data.
+
+\hypertarget{selecting-relevant-predictors-for-model}{%
+\subsection{Selecting Relevant Predictors For
+Model}\label{selecting-relevant-predictors-for-model}}
+
+I selected 8 data from EVDS that can be useful for my model. The series
+that I selected for this are right below. From now on, I will use the
+words at the beginning of the lines for that series:
+
+\begin{itemize}
+\tightlist
+\item
+  ``Dollar'': Exchange Rates of US Dollar/Turkish Lira
+\item
+  ``Loan'': Weighted Average Interest Rates For Banks Loans as
+  Percentages
+\item
+  ``Furniture'': Domestic Producer Price Index of Furniture
+\item
+  ``FSH'': Financial Situation of Household Survey (present compared to
+  the last 12 months)
+\item
+  ``GES'': General Economic Situation Survey (Present compared to the
+  past 12 months)
+\item
+  ``PSMHI'': The Probability of Spending Money on Home Improvements or
+  Renovations Survey (over the next 12 months)
+\item
+  ``Buying'': The Probability of Buying or Building a Home Survey (over
+  the next 12 months)
+\item
+  ``Automobile'': Production of Automobiles
+\end{itemize}
+
+Let's take a close look to these series. There are plots of each of them
+with the addition of plot of the squareroot of house sales:
+
+\begin{center}\includegraphics{IE360_hw2_files/figure-latex/correlation-1} \end{center}
+
+It can be hard to understand the correlations and make selections from
+line plots. So, I created a correlation matrix:
+
+\begin{center}\includegraphics{IE360_hw2_files/figure-latex/correlation matrix-1} \end{center}
+
+It can be seen that there aren't many strong correlations between the
+squareroot of sales and other series. The 3 strongest correlations are
+with Automobile, PSMHI and Buying series. I can add these series to my
+model for now.
+
+\hypertarget{creating-the-model}{%
+\subsection{Creating The Model}\label{creating-the-model}}
+
+I took the squareroot of my data and selected the relevant predictors
+that can help me. Now, it's time to fit the model. First of all, let's
+look at the summary and residuals of the initial model:
+
+\begin{verbatim}
+## 
+## Call:
+## lm(formula = root_sales ~ Automobile + PSMHI + Buying, data = sales)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -94.294 -15.141  -2.695  17.574 130.008 
+## 
+## Coefficients:
+##               Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)  3.161e+02  2.773e+01  11.398  < 2e-16 ***
+## Automobile   7.333e-04  1.850e-04   3.963 0.000143 ***
+## PSMHI       -3.232e+00  1.123e+00  -2.877 0.004956 ** 
+## Buying       5.855e+00  3.505e+00   1.671 0.098105 .  
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 35.02 on 95 degrees of freedom
+## Multiple R-squared:  0.2574, Adjusted R-squared:  0.234 
+## F-statistic: 10.98 on 3 and 95 DF,  p-value: 2.964e-06
+\end{verbatim}
+
+\begin{center}\includegraphics{IE360_hw2_files/figure-latex/regression1-1} \end{center}
+
+\begin{verbatim}
+## 
+##  Breusch-Godfrey test for serial correlation of order up to 10
+## 
+## data:  Residuals
+## LM test = 22.352, df = 10, p-value = 0.01341
+\end{verbatim}
+
+The p-value is really small which is a good thing for my model, but I
+need to improve the R-squared value. To make a better model, first I
+should add the seasonality variable as I mentioned above. For that
+reason, I'm adding month variable.
+
+\begin{verbatim}
+## 
+## Call:
+## lm(formula = root_sales ~ +as.factor(month) + Automobile + PSMHI + 
+##     Buying, data = sales)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -75.170 -15.616  -2.514  12.837 132.424 
+## 
+## Coefficients:
+##                      Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)         2.385e+02  2.991e+01   7.975 6.81e-12 ***
+## as.factor(month)2   6.360e+00  1.523e+01   0.418 0.677258    
+## as.factor(month)3   2.413e+01  1.538e+01   1.568 0.120541    
+## as.factor(month)4   1.513e+01  1.601e+01   0.945 0.347161    
+## as.factor(month)5   1.733e+01  1.611e+01   1.076 0.284999    
+## as.factor(month)6   2.368e+01  1.563e+01   1.515 0.133554    
+## as.factor(month)7   3.231e+01  1.551e+01   2.084 0.040213 *  
+## as.factor(month)8   6.888e+01  1.634e+01   4.214 6.27e-05 ***
+## as.factor(month)9   3.729e+01  1.554e+01   2.400 0.018622 *  
+## as.factor(month)10  2.674e+01  1.567e+01   1.706 0.091645 .  
+## as.factor(month)11  2.031e+01  1.579e+01   1.287 0.201774    
+## as.factor(month)12  6.165e+01  1.564e+01   3.942 0.000167 ***
+## Automobile          1.009e-03  2.053e-04   4.914 4.36e-06 ***
+## PSMHI              -1.848e+00  1.153e+00  -1.603 0.112740    
+## Buying              4.752e+00  3.300e+00   1.440 0.153594    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 31.58 on 84 degrees of freedom
+## Multiple R-squared:  0.4661, Adjusted R-squared:  0.3771 
+## F-statistic: 5.237 on 14 and 84 DF,  p-value: 5.333e-07
+\end{verbatim}
+
+\begin{center}\includegraphics{IE360_hw2_files/figure-latex/regression2-1} \end{center}
+
+\begin{verbatim}
+## 
+##  Breusch-Godfrey test for serial correlation of order up to 18
+## 
+## data:  Residuals
+## LM test = 53.483, df = 18, p-value = 2.208e-05
+\end{verbatim}
+
+There are some problems in the as.factor(month) coefficients that can be
+caused by the intercept coefficient. It will be wise to remove the
+intercept at the next step.
+
+Also, there are some outliers in data. These are mostly from 2020.
+Probably, the reason of this points are the conditions in the world
+during this year which is an extraordinary case. Therefore, I need to
+add outlier variables. The outliers are the ones below the minimum and
+above the maximum.To find outliers, I used these formulas : for small
+outliers: Q1 - 1.5 * IQR for big outliers: Q3 + 1.5 * IQR
+
+Also, I made a box plot to see the number of outliers.
+
+\begin{center}\includegraphics{IE360_hw2_files/figure-latex/boxplot2-1} \end{center}
+
+\begin{verbatim}
+## 
+## Call:
+## lm(formula = root_sales ~ -1 + as.factor(month) + big_outlier + 
+##     small_outlier + Automobile + PSMHI + Buying, data = sales)
+## 
+## Residuals:
+##    Min     1Q Median     3Q    Max 
+## -43.58 -11.47   1.69  10.75  44.48 
+## 
+## Coefficients:
+##                      Estimate Std. Error t value Pr(>|t|)    
+## as.factor(month)1   2.976e+02  2.492e+01  11.942  < 2e-16 ***
+## as.factor(month)2   3.067e+02  2.689e+01  11.408  < 2e-16 ***
+## as.factor(month)3   3.292e+02  2.805e+01  11.736  < 2e-16 ***
+## as.factor(month)4   3.265e+02  2.928e+01  11.153  < 2e-16 ***
+## as.factor(month)5   3.305e+02  2.966e+01  11.141  < 2e-16 ***
+## as.factor(month)6   3.267e+02  2.936e+01  11.129  < 2e-16 ***
+## as.factor(month)7   3.228e+02  2.710e+01  11.911  < 2e-16 ***
+## as.factor(month)8   3.410e+02  2.213e+01  15.408  < 2e-16 ***
+## as.factor(month)9   3.392e+02  2.565e+01  13.225  < 2e-16 ***
+## as.factor(month)10  3.302e+02  2.602e+01  12.688  < 2e-16 ***
+## as.factor(month)11  3.242e+02  2.624e+01  12.359  < 2e-16 ***
+## as.factor(month)12  3.497e+02  2.564e+01  13.638  < 2e-16 ***
+## big_outlier         9.775e+01  1.133e+01   8.631 3.91e-13 ***
+## small_outlier      -9.523e+01  1.652e+01  -5.764 1.39e-07 ***
+## Automobile          5.308e-04  1.551e-04   3.422 0.000973 ***
+## PSMHI              -1.747e+00  8.413e-01  -2.077 0.040941 *  
+## Buying              1.355e+00  2.053e+00   0.660 0.511093    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 19.32 on 82 degrees of freedom
+## Multiple R-squared:  0.9972, Adjusted R-squared:  0.9966 
+## F-statistic:  1705 on 17 and 82 DF,  p-value: < 2.2e-16
+\end{verbatim}
+
+\begin{center}\includegraphics{IE360_hw2_files/figure-latex/regression3-1} \end{center}
+
+\begin{verbatim}
+## 
+##  Breusch-Godfrey test for serial correlation of order up to 20
+## 
+## data:  Residuals
+## LM test = 34.86, df = 20, p-value = 0.02086
+\end{verbatim}
+
+Now, the p-value is really small and adjusted R-squared value is getting
+bigger which is very good for the model. But from ACF, one can say that
+the autocorrelation at lag 7 and at lag14 are relatively bigger than
+others. I added lag7 and lag14 variables to fix that.
+
+Last but not least, I removed the Buying series from my coefficients
+because the p-value for that wasn't small enough to improve the model.
+
+\begin{verbatim}
+## 
+## Call:
+## lm(formula = root_sales ~ -1 + as.factor(month) + lag7 + lag14 + 
+##     big_outlier + small_outlier + Automobile + PSMHI, data = sales)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -38.291  -8.740   1.909  11.138  33.493 
+## 
+## Coefficients:
+##                      Estimate Std. Error t value Pr(>|t|)    
+## as.factor(month)1   2.816e+02  2.298e+01  12.258  < 2e-16 ***
+## as.factor(month)2   2.903e+02  2.473e+01  11.738  < 2e-16 ***
+## as.factor(month)3   3.120e+02  2.583e+01  12.078  < 2e-16 ***
+## as.factor(month)4   3.058e+02  2.701e+01  11.323  < 2e-16 ***
+## as.factor(month)5   3.108e+02  2.733e+01  11.371  < 2e-16 ***
+## as.factor(month)6   3.090e+02  2.702e+01  11.437  < 2e-16 ***
+## as.factor(month)7   3.077e+02  2.501e+01  12.304  < 2e-16 ***
+## as.factor(month)8   3.286e+02  2.036e+01  16.140  < 2e-16 ***
+## as.factor(month)9   3.209e+02  2.385e+01  13.456  < 2e-16 ***
+## as.factor(month)10  3.147e+02  2.394e+01  13.142  < 2e-16 ***
+## as.factor(month)11  3.069e+02  2.427e+01  12.642  < 2e-16 ***
+## as.factor(month)12  3.337e+02  2.366e+01  14.101  < 2e-16 ***
+## lag7               -3.969e-01  1.089e-01  -3.643 0.000473 ***
+## lag14              -4.705e-01  1.221e-01  -3.854 0.000232 ***
+## big_outlier         9.716e+01  9.978e+00   9.738 2.78e-15 ***
+## small_outlier      -9.422e+01  1.477e+01  -6.381 1.03e-08 ***
+## Automobile          6.070e-04  1.432e-04   4.238 5.94e-05 ***
+## PSMHI              -9.249e-01  5.413e-01  -1.709 0.091370 .  
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 17.26 on 81 degrees of freedom
+## Multiple R-squared:  0.9978, Adjusted R-squared:  0.9973 
+## F-statistic:  2018 on 18 and 81 DF,  p-value: < 2.2e-16
+\end{verbatim}
+
+\begin{center}\includegraphics{IE360_hw2_files/figure-latex/regression4-1} \end{center}
+
+\begin{verbatim}
+## 
+##  Breusch-Godfrey test for serial correlation of order up to 21
+## 
+## data:  Residuals
+## LM test = 17.067, df = 21, p-value = 0.707
+\end{verbatim}
+
+I checked the summary of the model and the plots of the residuals and
+I'm really pleased with my final model. Now, I can provide my forecast.
+
+\hypertarget{forecasting-the-next-month}{%
+\subsection{Forecasting the Next
+Month}\label{forecasting-the-next-month}}
+
+Before the forecasting, let's take a look at the line plots of my model
+and actual values. First of all there are squareroots of predicted
+values and actual values. In the second plot, I squared the values. It's
+clear that there is similarity between two values. It proves that my
+model is good enough to forecast.
+
+\begin{center}\includegraphics{IE360_hw2_files/figure-latex/plots-1} \end{center}
+
+\begin{center}\includegraphics{IE360_hw2_files/figure-latex/plots-2} \end{center}
+
+Lastly, I make prediction for next month. I added a new row, and
+predicted the relevant variables to make prediction.
+
+My prediction for total house sales for next month is:
+
+\begin{verbatim}
+##        1 
+## 103693.1
+\end{verbatim}
+
+According to my model, there will be 103693 house sales in Turkey in
+April 2021.
+
+\hypertarget{conclusion}{%
+\subsection{Conclusion}\label{conclusion}}
+
+In this assignment, I made a time series regression for my selected data
+and made forecast for the next month.
+
+First of all, I made squareroots of the data, I selected relevant
+predictors to the model, I added necessary variables to improve my
+model. My R-squared value was increasing as I work with the model.After
+my model is good enough for forecasting, I predicted the April value
+with my model.
+
+You can reach my related code from
+\href{https://bu-ie-360.github.io/spring21-OzlemSenel/Files/IE_360hw2.Rmd}{here}.
+
+\end{document}
