@@ -16,6 +16,10 @@
 
 [Here](Files/hw3_360) is my forecasting with AR and MA models.
 
+## Homework 4-5 (3 July 2021)
+
+[Here](Files/homework4-5) is my forecasting with ARIMA models about Trendyol Product SaleS.
+
 ## PROJECT
 
 [Here](Files/Latest-File (1)) is our project.
