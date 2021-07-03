@@ -21,3 +21,7 @@
 [Here](Files/Latest-File (1)) is our project.
 
 [Here](Files/Latest File (2).Rmd) is the code of our project.
+
+## UPDATED PROJECT
+
+[Here](Files/FinalProject/finalproject) is our project about Trendyol Product Sale Forecasting.
