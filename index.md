@@ -26,4 +26,6 @@
 
 ## DATA MINING PROJECT
 
-[Here](Files/) is our project about Kobe Bryant's Field Goal Attempts Forecasting.
+[Here](Files/425-project-markdown-latest (3).html) is our project about Kobe Bryant's Field Goal Attempts Forecasting.
+[Here](Files/425-project-markdown-final (1).Rmd) is the RMarkdown of our project.
+
