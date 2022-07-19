@@ -1,0 +1,447 @@
+---
+title: "IE440 - HW1 - Group 6"
+author: "Alihan Zer - Özlem Şenel - İrem Öztürk - Onur Can Aydın"
+date: "06 11 2021"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+In this homework, we are asked to find a local minimum of this function between values a = -10 and b = 10:
+
+
+f(x) = x^3 cos(x) sin(x) + 3x^2sin(x)-3x
+
+
+Also, we are asked to find this value in several ways, which are:
+
+- Bisection Method
+- Golden Section Method
+- Newton's Method
+- Secant Method
+
+```{r include=FALSE}
+library(data.table)
+f = function(x){
+  (x^3) * cos(x*0.0174532925) * sin(x*0.0174532925) + 3 * (x^2) * sin(x*0.0174532925)-3*x
+}
+
+ff = expression((x^3) * cos(x*0.0174532925) * sin(x*0.0174532925) + 3 * (x^2) * sin(x*0.0174532925)-3*x)
+
+
+```
+
+
+```{r echo=FALSE, warning = FALSE}
+library(ggplot2)
+p <- ggplot(data = data.frame(x = 0), mapping = aes(x = x)) + stat_function(fun = f, col = "red") + xlim(-10,10) 
+p + ggtitle("f(x) = x^3 cos(x) sin(x) + 3x^2sin(x)-3x")+ geom_point(x=2.893074, y= -6.191273)
+```
+
+
+This point shown in the graph is the global minimum point of this function. In all methods, x converges to this point in this graph.
+
+
+```{r}
+
+feq1 = function(x3,x2,x1, c){
+  return(abs(x3-x2)/abs((x2-x1)^c))
+}
+
+feq2 = function(x3,x2,x1){
+  return(log(abs(x2 - x1)) - log(abs(x3 - x2)))
+}
+```
+
+Please note that, eq1 and eq2 symbolizes:
+
+
+
+Equation_{1} = {|x^{(k+1)} - x^{(k)}|}{|x^{(k)} - x^{(k-1)}|}
+
+
+Equation_{2} = -log|x^{(k+1)}-x^{(k)}| + log|x^{(k)} - x^{(k-1)}|
+
+
+## Bisection Method
+
+#### E = 0.005
+
+```{r}
+
+bisection = function(f, a, b, eps){
+vec_k = c()
+vec_a = c()
+vec_b = c()
+vec_x = c()
+vec_fx = c()
+vec_eq1 = c()
+vec_eq2 = c()
+counter = 0
+
+while(b-a>=eps){
+  x = (a+b)/2
+  counter = counter + 1
+  if(f(x+eps)<f(x)){
+    a = x
+  }
+  else{
+    b = x
+  }
+  vec_k[counter] = counter
+  vec_x[counter] = x
+  vec_a[counter] = a
+  vec_b[counter] = b
+  vec_fx[counter] = f(x)
+}
+
+for(i in (1:counter)){
+  vec_eq1[i] = feq1(vec_x[i+1], vec_x[i], vec_x[i-1], c = 1)
+  vec_eq2[i] = feq2(vec_x[i+1], vec_x[i], vec_x[i-1])
+}
+bisection_table = data.table(vec_k,vec_a, vec_b, vec_x, vec_fx, vec_eq1, vec_eq2)
+ return(bisection_table) 
+}
+
+bt = bisection(f, -10, 10, 0.005)
+colnames(bt) = c("Iteration", "a", "b", "x", "f(x)", "eq1", "eq2")
+bt
+```
+This table shows all iterations. The epsilon value was chosen as 0.005.
+
+Additionally, the optimal point and its value is:
+
+```{r}
+c(bt[.N, x], bt[.N, f(x)])
+```
+We can also choose a different epsilon value.
+
+#### E = 0.001
+
+```{r}
+bt2 = bisection(f, -10, 10, 0.001)
+colnames(bt2) = c("Iteration", "a", "b", "x", "f(x)", "eq1", "eq2")
+
+bt2
+```
+The optimal point and its value is:
+
+```{r}
+c(bt2[.N, x], bt2[.N, f(x)])
+
+```
+#### E = 0.0005
+
+```{r}
+bt3 = bisection(f, -10 , 10, 0.0005)
+colnames(bt3) = c("Iteration", "a", "b", "x", "f(x)", "eq1", "eq2")
+bt3
+```
+
+The optimal point and its value is:
+
+```{r}
+c(bt3[.N, x], bt3[.N, f(x)])
+
+```
+
+
+## Golden Search
+
+#### E = 0.005
+
+```{r}
+golden_section <-function(a,b,eps,f){
+  
+  x = b - 0.618 * (b-a)
+  y = a + 0.618 * (b-a)
+  fx = f(x)
+  fy = f(y)
+  counter=0
+  vec_k<-c()
+  vec_a<-c()
+  vec_b<-c()
+  vec_x<-c()
+  vec_y<-c()
+  vec_fx<-c()
+  vec_fy <-c()
+  vec_eq1 <- c()
+  vec_eq2 <- c()
+  
+  while(b-a >= eps){
+    
+    counter = counter + 1
+    
+    if(fx > fy){
+      a <- x
+      x <- y
+      fx <- fy
+      y <- a + 0.618 * (b-a)
+      fy <- f(y)
+    }
+    else{
+      b <- y
+      y <- x
+      x <- b - 0.618 * (b-a)
+      fy <- fx
+      fx <- f(x)
+    }
+    
+    vec_k[counter]=counter
+    vec_a[counter]=a
+    vec_b[counter]=b
+    vec_x[counter]=x
+    vec_y[counter]=y
+    vec_fx[counter]=fx
+    vec_fy[counter]=fy
+  }
+  vec_k <- append(vec_k, 0,after=0)
+  vec_a <- append(vec_a, -10,after=0)
+  vec_b <- append(vec_b, 10,after=0)
+  vec_x <- append(vec_x, -2.36,after=0)
+  vec_y <- append(vec_y, 2.36 ,after=0)
+  vec_fx <- append(vec_fx, f(-2.36),after=0)
+  vec_fy <- append(vec_fy, f(2.36),after=0)
+  
+  for(i in (1:counter)){
+  vec_eq1[i] = feq1(vec_x[i+1], vec_x[i], vec_x[i-1], c = 1)
+  vec_eq2[i] = feq2(vec_x[i+1], vec_x[i], vec_x[i-1])
+  }
+  
+  vec_eq1 <- append(vec_eq1, NA ,after=0)
+  vec_eq2 <- append(vec_eq2, NA ,after=0)
+  
+  
+  dt_golden <- data.table(vec_k,vec_a, vec_b, vec_x,vec_y, vec_fx, vec_fy, vec_eq1, vec_eq2)
+colnames(dt_golden) =  c ("Iteration", "a", "b", "x", "y", "f(x)", "f(y)", "eq1", "eq2")
+  return(dt_golden)
+  
+}
+
+gt = golden_section(-10, 10, 0.005, f)
+
+
+gt
+```
+The optimal point and its value is:
+
+```{r}
+c(gt[.N, x], gt[.N, f(x)])
+
+```
+#### E = 0.001
+
+```{r}
+gt3 = golden_section(-10, 10, 0.001, f)
+gt3
+```
+The optimal point and its value is:
+
+```{r}
+c(gt3[.N, x], gt3[.N, f(x)])
+
+```
+#### E = 0.0005
+
+```{r}
+gt2 = golden_section(-10, 10, 0.0005, f)
+gt2
+
+
+```
+
+The optimal point and its value is:
+
+```{r}
+c(gt2[.N, x], gt2[.N, f(x)])
+
+```
+
+## Netwon's Method
+
+#### E = 0.005
+
+```{r}
+derivative = function(k, ff){
+  x = k
+  eval(D(ff, 'x'))
+}
+
+second_derivative = function(k, ff){
+  x = k
+  eval(D(D(ff, 'x'), 'x'))
+}
+
+newton = function(x0, eps, f, ff){
+  counter = 0
+  vec_k = c()
+  vec_xk = c()
+  vec_fxk = c()
+  vec_dfxk = c()
+  vec_ddfxk = c()
+  vec_eq1 = c()
+  
+  while(1){
+    counter = counter + 1
+    x1 = x0 - (derivative(x0, ff)/second_derivative(x0, ff))
+    if(abs(derivative(x1, ff)) < eps){
+      vec_k[counter] = counter
+      vec_xk[counter] = x1
+      vec_fxk[counter] = f(x1)
+      vec_dfxk[counter] = derivative(x1, ff)
+      vec_ddfxk[counter] = second_derivative(x1, ff)
+      break
+    }
+    vec_k[counter] = counter
+    vec_xk[counter] = x1
+    vec_fxk[counter] = f(x1)
+    vec_dfxk[counter] = derivative(x1, ff)
+    vec_ddfxk[counter] = derivative(x1, ff)
+    x0 = x1
+
+    }
+  for(i in (1:counter)){
+    vec_eq1[i] = feq1(vec_xk[i+1], vec_xk[i], vec_xk[i-1], c = 2)
+  }
+  newton_table = data.table(vec_k, vec_xk, vec_fxk, vec_dfxk, vec_ddfxk,vec_eq1)
+  colnames(newton_table) = c("Iteration", "x_k", "f(x_k)", "f'(x_k)", "f''(x_k)", "eq1")
+
+ return(newton_table)
+  }
+
+nt = newton(10, 0.005, f, ff)
+nt
+```
+The optimal point and its value is:
+
+```{r}
+c(nt[.N, x_k], nt[.N, f(x_k)])
+
+```
+#### E = 0.001
+
+```{r}
+nt2 = newton(10, 0.001, f, ff)
+nt2
+```
+
+The optimal point and its value is:
+
+```{r}
+c(nt2[.N, x_k], nt2[.N, f(x_k)])
+
+```
+
+
+#### E = 0.0005
+
+```{r}
+nt3 = newton(10, 0.0005, f, ff)
+nt3
+```
+
+The optimal point and its value is:
+
+```{r}
+c(nt3[.N, x_k], nt3[.N, f(x_k)])
+
+```
+
+## Secant Method
+
+```{r include=FALSE}
+derivative = function(k, ff){
+  x = k
+  eval(D(ff, 'x'))
+}
+
+x1_finder = function(x0, f){
+  return(x0 - derivative(x0, ff)/derivative(x0, D(ff, 'x')))
+}
+
+```
+
+
+#### E = 0.005
+
+```{r}
+
+secant = function(x0, x1, eps, f, ff){
+   
+    counter = 0
+    vec_k = c()
+    vec_xk = c()
+    vec_fxk = c()
+    vec_fdxk= c()
+    vec_eq3 = c()
+    while(1){
+    counter = counter + 1
+    x2 = x1 - ((derivative(x1, ff)) / ((derivative(x1, ff) - derivative(x0, ff)))) * (x1 - x0)
+    
+    if(abs(derivative(x2, ff)) < eps){
+      vec_k[counter] = counter
+      vec_xk[counter] = x2
+      vec_fxk[counter] = f(x2)
+      vec_fdxk[counter] = derivative(x2, ff)
+      break
+    }
+    vec_k[counter] = counter
+    vec_xk[counter] = x2
+    vec_fxk[counter] = f(x2)
+    vec_fdxk[counter] = derivative(x2, ff)
+    x0 = x1
+    x1 = x2
+  
+    }
+  for(i in (1:counter)){
+    vec_eq3[i] = (abs(vec_xk[i+1] - vec_xk[i])) / abs(vec_xk[i] - vec_xk[i-1])^1.618
+  }
+  secant_table = data.table(vec_k, vec_xk, vec_fxk, vec_fdxk, vec_eq3)
+  colnames(secant_table) = c("Iteration", "x_k", "f(x_k)", "f'(x_k)",  "eq1")
+
+ return(secant_table)
+}
+
+
+
+
+st = secant(10, x1_finder(10, f), 0.005, f, ff)
+colnames(st) = c("Iteration", "x_k", "f(x_k)", "f'(x_k)",  "eq1")
+st
+```
+The optimal point and its value is:
+
+```{r}
+c(st[.N, x_k], st[.N, f(x_k)])
+
+```
+
+
+#### E = 0.001
+
+```{r}
+st2 = secant(10,x1_finder(10, f), 0.001, f, ff)
+st2
+```
+
+The optimal point and its value is:
+
+```{r}
+c(st2[.N, x_k], st2[.N, f(x_k)])
+
+```
+
+#### E = 0.0005
+
+```{r}
+st3 = secant(10,x1_finder(10, f), 0.0005, f, ff)
+st3
+```
+
+The optimal point and its value is:
+
+```{r}
+c(st3[.N, x_k], st3[.N, f(x_k)])
+
+```
