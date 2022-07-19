@@ -29,6 +29,7 @@
 ## Finding Local Minimum with Several Methods - 2
 
 [In this homework](Files/IE440/440-HW3--3-.html) the local minimum is found with these 3 methods: Cyclic-Coordinate Search, Hook and Jeeves Method, Simplex Search.
+
 [Here](Files/IE440/440-HW3 (3) (2).Rmd) is the RMarkdown of our homework.
 
 ## Finding Local Minimum with Several Methods - 3
