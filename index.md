@@ -34,9 +34,9 @@
 
 ## Finding Local Minimum with Several Methods - 3
 
-[In this homework](Files/IE440/440-HW4--2-) the local minimum is found with these 4 methods: Newton’s Method (with exact line search), DFP (Davidon - Fletcher - Powell) Method, BFGS (Broyden - Fletcher - Goldfarb - Shanno) Method.
+[In this homework](Files/IE440/IE440-HW4--2-) the local minimum is found with these 3 methods: Newton’s Method (with exact line search), DFP (Davidon - Fletcher - Powell) Method, BFGS (Broyden - Fletcher - Goldfarb - Shanno) Method.
 
-[Here](Files/IE440/440-HW4 (2)) is the RMarkdown of our homework.
+[Here](Files/IE440/IE440-HW4 (2)) is the RMarkdown of our homework.
 
 ## TIME SERIES ANALYSIS AND FORECASTING PROJECT
 
