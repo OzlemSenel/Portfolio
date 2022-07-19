@@ -1,0 +1,435 @@
+---
+title: "IE440-HW4"
+author: "Alihan Zer - İrem Öztürk - Onur Can Aydın - Özlem Şenel"
+output: html_document
+---
+
+
+In this homework, considering the following function:
+
+f(x1, x2) = (5x1 − x2)^4 + (x1 − 2)^2 + x1 − 2x2 + 12
+
+
+The minimum of this function are found using this methods:
+
+1. Newton’s Method (with exact line search)
+2. DFP (Davidon - Fletcher - Powell) Method
+3. BFGS (Broyden - Fletcher - Goldfarb - Shanno) Method
+
+
+
+## Newton’s Method (with exact line search)
+
+For the function, epsilon=0.005 and x0=(1,10).
+Here is the solution:
+
+
+```{r newton1}
+f1 <- function(x){
+  (5*x[1] - x[2])^4 + (x[1]-2)^2 + x[1] - 2*x[2] + 12
+}
+f1_by_x1<-function(x){
+  4 * (5 * (5 * x[1] - x[2])^3) + 2 * (x[1] - 2) + 1
+}
+
+f1_by_x1x1<-function(x){
+  300 * (5 * x[1] - x[2])^2 + 2
+}
+
+f1_by_x2<-function(x){
+  -(4 * (5 * x[1] - x[2])^3 + 2)
+}
+
+f1_by_x2x2<-function(x){
+  12 * (5 * x[1] - x[2])^3
+}
+
+f1_by_x1x2<-function(x){
+  -60 * (5 * x[1] - x[2])^2
+}
+
+f2 <- function(x){
+  100 * (x[2] - x[1]^2)^2 + (1-x[1])^2
+}
+f2_by_x1<-function(x){
+  -(2 * (1 - x[1]) + 100 * (2 * (2 * x[1] * (x[2] - x[1]^2))))
+}
+
+f2_by_x1x1<-function(x){
+  1600 * (x[1]^2) * (x[2] - x[1]^2) + 400 * (x[2] - x[1]^2)^2 + 2
+}
+f2_by_x2<-function(x){
+  100 * (2 * (x[2] - x[1]^2))
+}
+
+f2_by_x2x2<-function(x){
+  400 * (x[2] - x[1]^2)
+}
+
+f2_by_x1x2<-function(x){
+  (-8) * x[1] * (x[2] - x[1]^2)
+}
+
+grad_f1<-function(f1,x){
+  grad_f = c(1,1)
+  grad_f[1]=f1_by_x1(x)
+  grad_f[2]=f1_by_x2(x)
+  return(grad_f)
+  
+}
+
+grad_f2<-function(f2,x){
+  grad_f = c(1,1)
+  grad_f[1]=f2_by_x1(x)
+  grad_f[2]=f2_by_x2(x)
+  return(grad_f)
+  
+}
+
+second_grad_f1<-function(f1,x){
+  grad_f = matrix(1:4, nrow = 2, ncol = 2)
+  grad_f[1,1]=f1_by_x1x1(x)
+  grad_f[1,2]=f1_by_x1x2(x)
+  grad_f[2,1]=f1_by_x1x2(x)
+  grad_f[2,2]=f1_by_x2x2(x)
+  return(grad_f)
+}
+
+second_grad_f2<-function(f2,x){
+  grad_f = matrix(1:4, nrow = 2, ncol = 2)
+  grad_f[1,1]=f2_by_x1x1(x)
+  grad_f[1,2]=f2_by_x1x2(x)
+  grad_f[2,1]=f2_by_x1x2(x)
+  grad_f[2,2]=f2_by_x2x2(x)
+  return(grad_f)
+}
+
+
+
+argmin_alpha<-function(x1,d,f){
+  selected_alphas<-c(1)
+  
+  vec_all_alpha <- seq(-100, 100, by = 0.005)
+  f_all_alpha <-c()
+  for (i in 1:length(vec_all_alpha)) 
+  {
+    f_all_alpha[i] <-f(x1 + vec_all_alpha[i]*d)
+  }
+  selected_alphas <-vec_all_alpha[which.min(f_all_alpha)]
+  
+  return(selected_alphas)
+}
+
+
+final_table <- data.frame(matrix(ncol = 9))
+colnames(final_table) <- c("Iteration", "x(k)_1","x(k)_2", "f(x(k))" ,"d_1","d_2", "alpha", "x(k+1)_1","x(k+1)_2")
+
+
+
+
+Newton1 <- function(f1,x1,final_table,epsilon){
+  k_fun=1
+  d <- list()
+  alpha <- c()
+  x <- list()
+  x[[1]] = x1
+  while(1){
+    d[[k_fun]]<- (-1)*solve(second_grad_f1(f1,x[[k_fun]])) %*% grad_f1(f1,x[[k_fun]])
+    alpha[k_fun]<-argmin_alpha(x[[k_fun]],d[[k_fun]],f1)
+    
+    x[[k_fun+1]] <- x[[k_fun]] + alpha[k_fun] * d[[k_fun]]
+    
+    
+    
+    final_table[k_fun,] = list(k_fun-1, x[[k_fun]][1], x[[k_fun]][2],f1(x[[k_fun]]), d[[k_fun]][1], d[[k_fun]][2], alpha[k_fun], x[[k_fun+1]][1], x[[k_fun+1]][2])
+    
+    k_fun = k_fun + 1
+    
+    a<-grad_f1(f1,as.vector(t(x[[k_fun]])))
+    if(sqrt(a[1]^2+a[2]^2)<epsilon){
+      print(final_table)
+      print(paste("X coordinate of x_bar: " ,x[[k_fun]][1], "Y coordinate of x_bar: ", x[[k_fun]][2]))
+      print(paste("f(x_bar): " ,f1(x[[k_fun]])))
+      break
+      
+    }
+    
+    else if(k_fun==50){
+      print(final_table)
+      print(paste("X coordinate of x_bar: " ,x[[k_fun]][1], "Y coordinate of x_bar: ", x[[k_fun]][2]))
+      print(paste("f(x_bar): " ,f1(x[[k_fun]])))
+      break
+    }
+
+  }
+  
+}
+
+Newton2 <- function(f2,x1,final_table,epsilon){
+  k_fun=1
+  d <- list()
+  alpha <- c()
+  x <- list()
+  x[[1]] = x1
+  while(1){
+    d[[k_fun]]<- (-1)*solve(second_grad_f2(f2,x[[k_fun]])) %*% grad_f2(f2,x[[k_fun]])
+    alpha[k_fun]<-argmin_alpha(x[[k_fun]],d[[k_fun]],f2)
+    
+    x[[k_fun+1]] <- x[[k_fun]] + alpha[k_fun] * d[[k_fun]]
+    
+    
+    
+    final_table[k_fun,] = list(k_fun-1, x[[k_fun]][1], x[[k_fun]][2],f2(x[[k_fun]]), d[[k_fun]][1], d[[k_fun]][2], alpha[k_fun], x[[k_fun+1]][1], x[[k_fun+1]][2])
+    
+    k_fun = k_fun + 1
+    
+    a<-grad_f2(f2,as.vector(t(x[[k_fun]])))
+    if(sqrt(a[1]^2+a[2]^2)<epsilon || alpha[[k_fun-1]] == 0){
+      print(final_table)
+      print(paste("X coordinate of x_bar: " ,x[[k_fun]][1], "Y coordinate of x_bar: ", x[[k_fun]][2]))
+      print(paste("f(x_bar): " ,f1(x[[k_fun]])))
+      break
+      
+    }
+    
+    else if(k_fun==50){
+      print(final_table)
+      print(paste("X coordinate of x_bar: " ,x[[k_fun]][1], "Y coordinate of x_bar: ", x[[k_fun]][2]))
+      print(paste("f(x_bar): " ,f1(x[[k_fun]])))
+      
+      break
+    }
+    
+  }
+  
+}
+
+
+x1<-c(1,10)
+epsilon=0.005
+
+Newton1(f1,x1,final_table,epsilon)
+```
+
+
+## DFP (Davidon - Fletcher - Powell) Method
+
+For the function, epsilon=0.005 and x0=(1,10).
+Here is the solution:
+
+```{r dfp1}
+f_1 <- function(x){
+  (5*x[1] - x[2])^4 + (x[1]-2)^2 + x[1] - 2*x[2] + 12
+}
+f_1_by_x1<-function(x){
+  4 * (5 * (5 * x[1] - x[2])^3) + 2 * (x[1] - 2) + 1
+}
+f_1_by_x2<-function(x){
+ -(4 * (5 * x[1] - x[2])^3 + 2)
+}
+f_1_exp<-expression((5*x1 - x2)^4 + (x1-2)^2 + x1 - 2*x2 + 12)
+
+
+f_2 <- function(x){
+100 * (x[2] - x[1]^2)^2 + (1-x[1])^2
+}
+f_2_by_x1<-function(x){
+  -(2 * (1 - x[1]) + 100 * (2 * (2 * x[1] * (x[2] - x[1]^2))))
+}
+f_2_by_x2<-function(x){
+  100 * (2 * (x[2] - x[1]^2))
+}
+f_2_exp<-expression(100*(x2-x1^2)^2 + (1-x1)^2)
+
+grad_f1<-function(f1,x){
+  grad_f = c(1,1)
+  grad_f[1]=f1_by_x1(x)
+  grad_f[2]=f1_by_x2(x)
+  return(grad_f)
+
+}
+
+grad_f2<-function(f2,x){
+  grad_f = c(1,1)
+  grad_f[1]=f2_by_x1(x)
+  grad_f[2]=f2_by_x2(x)
+  return(grad_f)
+
+}
+
+
+library(data.table)
+
+
+A_calc <- function(p,q){
+  numerator = p %*% t(p)
+  denominator = t(p) %*% p
+  return(numerator / as.numeric(denominator))
+}
+
+B_calc <- function(q, H){
+  numerator = H %*% q %*% t(q) %*% H
+  denominator = t(q) %*% H %*% q
+  return(-(numerator/as.numeric(denominator)))
+}
+
+
+euc_dist = function(d){
+  return(sqrt(d[1]^2 + d[2]^2))  
+}
+
+
+argmin_alpha<- function(x,d,f){
+  selected_alpha<-c()
+  vec_all_alpha <- seq(0.005, 200, by = 0.005)
+  f_all_alpha <-c()
+   for (i in 1:length(vec_all_alpha)){
+     
+    f_all_alpha[i] <-f(x + vec_all_alpha[i]*d)
+     }
+  selected_alpha <-vec_all_alpha[match(min(f_all_alpha), f_all_alpha)]
+  
+  return(selected_alpha)
+}
+
+DFP <- function(f, epsilon){
+  if(identical(deparse(f), deparse(f_1))){
+    gradd = grad_f1
+  }
+  else{
+    gradd = grad_f2
+  }
+  
+final_table <- data.frame(matrix(ncol = 9))
+colnames(final_table) <- c("Iteration(k)", "x1(k)","x2(k)", "fx(k)" ,"d(k):X1", "d(k):x2", "alpha(k)", "x1(k+1)","x2(k+1)")
+x = list()
+H = list()
+x[[1]] = c(0,0)
+k = 1
+H[[k]] = diag(2)
+
+d = list()
+alpha = c()
+p = list()
+q = list()
+A = list()
+B = list()
+
+while(1){
+  d[[k]] =  -H[[k]] %*% gradd(f, x[[k]]) 
+  if(euc_dist(d[[k]]) < epsilon){
+    break
+  }
+ 
+  else{
+    alpha[k] = argmin_alpha(x[[k]], as.vector(d[[k]]), f)
+    x[[k + 1]] = x[[k]] + alpha[k] * d[[k]]
+    p[[k]] = x[[k+1]] - x[[k]]  
+    q[[k]] = gradd(f, x[[k+1]]) - gradd(f, x[[k]])
+    A[[k]] = A_calc(p[[k]], q[[k]])
+    B[[k]] = B_calc(q[[k]], H[[k]])
+    H[[k+1]] = H[[k]] + A[[k]] + B[[k]]
+    
+    final_table = rbind(final_table, list(k-1, x[[k]][1], x[[k]][2] ,f(x[[k]]), d[[k]][1],d[[k]][2], alpha[k], x[[k+1]][1],x[[k+1]][2] ))
+    k = k + 1
+    
+  }
+  
+}
+print(paste("x*=", x[[k-1]]))
+print(paste("f(x*)=", f(x[[k-1]])))
+rownames(final_table) = 0:(nrow(final_table)-1)
+return(final_table[-1,])
+}
+table_dfp_1= DFP(f_1,0.005)
+table_dfp_1
+
+```
+
+
+## BFGS (Broyden - Fletcher - Goldfarb - Shanno) Method
+
+For the function, epsilon=0.005 and x0=(0,0).
+Here is the solution:
+
+```{r bfgs1}
+
+A_calc_2 <- function(p,q,H){
+  
+  numerator1 =  as.numeric(1 + t(q) %*% H %*% q)
+  denominator1 = as.numeric(t(q) %*% p)
+  
+  numerator2 = p %*% t(p)
+  denominator2= as.numeric(t(p) %*%q)
+  
+  return((numerator1 / denominator1)*(numerator2/denominator2))
+}
+
+B_calc_2 <- function(p,q, H){
+  
+  numerator = (p %*% t(q) %*% H )+ (H %*% q %*% t(p))
+  denominator = as.numeric(t(q) %*% p)
+  return(-(numerator/denominator))
+}
+
+
+
+
+BFGS <- function(f, epsilon){
+    if(identical(deparse(f), deparse(f_1))){
+    gradd = grad_f1
+  }
+  else{
+    gradd = grad_f2
+  }
+
+  final_table <- data.frame(matrix(ncol = 9))
+  colnames(final_table) <- c("Iteration(k)", "x1(k)","x2(k)", "fx(k)" ,"d(k):X1", "d(k):x2", "alpha(k)", "x1(k+1)","x2(k+1)")
+  x = list()
+  H = list()
+  x[[1]] = c(0,0)
+  k = 1
+  H[[k]] = diag(2)
+  
+  d = list()
+  alpha = c()
+  p = list()
+  q = list()
+  A = list()
+  B = list()
+  
+  while(1){
+    d[[k]] =  -H[[k]] %*% gradd(f, x[[k]]) 
+    if(euc_dist(d[[k]]) < epsilon){
+      break
+    }
+    
+    else{
+      alpha[k] = argmin_alpha(x[[k]], as.vector(d[[k]]), f)
+      x[[k + 1]] = x[[k]] + alpha[k] * d[[k]]
+      p[[k]] = x[[k+1]] - x[[k]]  
+      q[[k]] = gradd(f, x[[k+1]]) - gradd(f, x[[k]])
+      A[[k]] = A_calc_2(p[[k]], q[[k]], H[[k]])
+      B[[k]] = B_calc_2(p[[k]], q[[k]], H[[k]])
+      H[[k+1]] = H[[k]] + A[[k]] + B[[k]]
+      
+      final_table = rbind(final_table, list(k-1, x[[k]][1], x[[k]][2] ,f(x[[k]]), d[[k]][1],d[[k]][2], alpha[k], x[[k+1]][1],x[[k+1]][2] ))
+      k = k + 1
+      
+    }
+    
+  }
+
+  print(paste("x*=", x[[k-1]]))
+  print(paste("f(x*)=", f(x[[k-1]])))
+  rownames(final_table) = 0:(nrow(final_table)-1)
+  return(final_table[-1,])
+}
+
+
+
+table_bfgs_1= BFGS(f_1,0.005)
+table_bfgs_1
+
+```
+
