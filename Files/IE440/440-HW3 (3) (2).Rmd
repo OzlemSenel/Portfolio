@@ -1,0 +1,318 @@
+---
+title: "IE 440-HW3"
+author: "Alihan Zer - İrem Öztürk - Onur Can Aydın - Özlem Şenel"
+output: html_document
+---
+In this homework, considering the following function:
+
+f(x1, x2) = (5x1 − x2)^4 + (x1 − 2)^2 + x1 − 2x2 + 12
+
+The minimum of this function are found using this methods:
+
+1. Cyclic-Coordinate Search
+2. Hook and Jeeves Method
+3. Simplex Search
+
+## Cyclic-Coordinate Search
+
+In first set, epsilon=0.005 and x0=(0,30).
+Here is the solution:
+
+```{r cyclic1}
+f <- function(x){
+  (5*x[1] - x[2])^4 + (x[1]-2)^2 + x[1] - 2*x[2] + 12
+}
+
+e = matrix(nrow = 2, ncol = 2)
+e[1,] = c(1,0)
+e[2,] = c(0,1)
+
+#selected alpha return
+argmin_alpha<-function(x1,e,f){
+  selected_alpha<-c()
+  for (j in (1:2)) 
+  {
+    vec_all_alpha <- seq(-100, 100, by = 0.005)
+    f_all_alpha <-c()
+    for (i in 1:length(vec_all_alpha)) 
+    {
+      
+      f_all_alpha[i] <-f(x1 + vec_all_alpha[i]*e[j,])
+    }
+    selected_alpha[j] <-vec_all_alpha[which.min(f_all_alpha)]
+  }
+  return(selected_alpha)
+}
+
+
+x1=c(0,30)
+
+
+final_table <- data.frame(matrix(ncol = 8))
+colnames(final_table) <- c("Iteration", "x(k)_1","x(k)_2", "f(x(k))" , "d(k)_x", "alpha(x)","x(k+1)_1", "x(k+1)_2")
+cyclic <- function(x1,e,f,final_table){
+  selected_alpha = c(0,0)
+   k_fun=1
+  while(1)
+    {
+     
+
+    for ( j in (1:2))
+      {
+    
+      selected_alpha<-argmin_alpha(x1,e,f)
+       x2 <- x1+selected_alpha[j]%*%e[j,]
+       
+         
+    if(k_fun==1){
+     final_table[1,] = list(0, x1[1], x1[2], f(x1),NA, NA, NA, NA)
+   }
+   else{
+     final_table[k_fun,] = list(k_fun-1, x1[1], x1[2], f(x1), (x2[2]-x1[2])+(x2[1]-x1[1]),(x2[2]-x1[2])+(x2[1]-x1[1]) , x2[1], x2[2])     
+   }
+       old_x1 <- x1
+       x1<-x2
+         k_fun=k_fun+1
+
+
+    }
+    if((abs(x1[2]-old_x1[2])+abs(x1[1]-old_x1[1]))<0.01)
+       {
+      print(final_table)
+      print(paste("X coordinate of x(k): " ,x1[1], "Y coordinate of x(k): ", x1[2]))
+      print(paste("f(x(k)): " ,f(x1)))
+      break
+      
+       }
+
+  }
+}
+
+
+
+cyclic(x1, e, f, final_table)
+
+
+```
+
+In second set, epsilon=0.005 and x0=(-10,10).
+Here is the solution:
+
+```{r cyclic2}
+x1 = c(-10,10)
+cyclic(x1, e, f, final_table)
+```
+
+
+## Hook and Jeeves Method
+
+In first set, epsilon=0.005 and x0=(0,30).
+Here is the solution:
+
+```{r hook1}
+
+f <- function(x){
+  (5*x[1] - x[2])^4 + (x[1]-2)^2 + x[1] - 2*x[2] + 12
+}
+#selected alphas return
+argmin_alpha<-function(x1,e,f){
+  selected_alphas<-c()
+  for (j in 1:2) 
+  {
+    vec_all_alpha <- seq(-100, 100, by = 0.005)
+    f_all_alpha <-c()
+    for (i in 1:length(vec_all_alpha)) 
+    {
+      f_all_alpha[i] <-f(x1 + vec_all_alpha[i]*e[j,])
+    }
+    selected_alphas[j] <-vec_all_alpha[which.min(f_all_alpha)]
+  }
+  return(selected_alphas)
+}
+argmin_alpha2<-function(x1,f,x3){
+  alpha2_all <-seq(-100, 100, by = 0.05)
+  f_pool2 <-vector()
+  for (i in 1:length(alpha2_all)) 
+  {
+    f_pool2[i] <- f(x1 + alpha2_all[i]*x3)
+  }
+  alpha2 <- alpha2_all[which.min(f_pool2)]
+  return(alpha2)
+}
+
+e = matrix(nrow = 2, ncol = 2)
+e[1,] = c(1,0)
+e[2,] = c(0,1)
+
+x1 = c(0,30)
+
+final_table <- data.frame(matrix(ncol = 11))
+colnames(final_table) <- c("Iteration", "x(k)_1","x(k)_2", "f(x(k))" ,"x_temp_1","x_temp_2", "d(k)_1", "d(k)_2","alfa(k)", "x(k+1)_1","x(k+1)_2")
+hook_jeeves <-function(x1, f,final_table){
+ k_fun=1#function iteration
+ 
+  while(1){
+   
+   selected_alphas<-argmin_alpha(x1,e,f)
+    
+   x2<-x1+selected_alphas%*%e
+   #hold x_temp
+   x3<-x2-x1
+   
+   alpha2<-argmin_alpha2(x1,f,x3)
+   
+   x_old<-x1
+   x4 <- x1+alpha2*x3
+   
+   
+   
+   if(k_fun==1){
+     final_table[1,] = list(0, x1[1], x1[2], f(x1), x2[1], x2[2], x3[1], x3[2],alpha2, NA, NA)
+   }
+   else{
+     final_table[k_fun,] = list(k_fun-1, x1[1], x1[2],f(x1), x2[1], x2[2], x3[1], x3[2],alpha2, x4[1], x4[2])
+     
+   }
+     
+    x1 <- x4
+     
+   if(sqrt((x_old[1]-x1[1])^2+(x_old[2]-x1[2])^2) < 0.01){
+     
+     print(final_table)
+      print(paste("X coordinate of x(k): " ,x1[1], "Y coordinate of x(k): ", x1[2]))
+      print(paste("f(x(k)): " ,f(x1)))
+     break
+     
+   }
+   
+    
+    k_fun=k_fun+1
+ }
+} 
+
+
+hook_jeeves(x1,f,final_table)
+
+
+```
+
+In second set, epsilon=0.005 and x0=(-10,10).
+Here is the solution:
+
+```{r hook2}
+
+x1 = c(-10,10)
+
+hook_jeeves(x1, f,final_table)
+
+
+```
+
+
+## Simplex Search
+
+In first set, epsilon=0.005 and x1=(0.2,1), x2=(0,1) and x3=(0.4,0).
+Here is the solution:
+
+```{r simplex1}
+f <- function(x){
+  (5*x[1] - x[2])^4 + (x[1]-2)^2 + x[1] - 2*x[2] + 12
+}
+
+argmin <- function(f, x_list){
+  helper <- c(f(x_list[[1]]), f(x_list[[2]]), f(x_list[[3]]))
+  return(which.min(helper))
+}
+
+argmax <- function(f, x_list){
+  helper <- c(f(x_list[[1]]), f(x_list[[2]]), f(x_list[[3]]))
+  return(which.max(helper))
+}
+
+x1 <- c(0.2,1)
+x2 <- c(0,1)
+x3 <- c(0.4,0)
+x_list <- list(x1,x2,x3)
+final_table <- data.frame(matrix(ncol = 11))
+colnames(final_table) <- c("Iteration", "x_bar: x", "x_bar: y" ,"x_h: x", "x_h: y", "x_l: x", "x_l: y", "x_new: x", "x_new: y", "f(x_new)", "Type")
+
+simplex <- function(alpha, beta, gama, epsilon, f, x_list, final_table){
+  iteration <- 1
+  while(1){
+    x_h <- x_list[[argmax(f, x_list)]]
+    x_l <- x_list[[argmin(f, x_list)]]
+    for(i in (1:3)){
+      if(x_list[[i]]!=x_h && x_list[[i]]!=x_l){
+        x_g <- x_list[[i]]
+      }
+    }
+    x_c <- ((x_list[[1]] + x_list[[2]]+x_list[[3]])-x_h)/2
+    
+    
+    x_r <- 2 * x_c - x_h
+    x_new <- x_r
+    type <- "R"
+    
+    if(iteration==1){
+      final_table[1,] = list(0, x_c[1], x_c[2], x_h[1], x_h[2], x_l[1], x_l[2], NA, NA, NA, NA)
+    }
+    
+    if(f(x_r)<f(x_l)){
+      x_new <- (1+gama) * (x_c) - gama * x_h
+      type <- "E"
+    }
+    
+    else if(f(x_r)>=f(x_h)){
+      x_new <- (1-beta) * x_c + beta * x_h
+      type <- "C"
+      }
+    
+    else if(f(x_g)<f(x_r) && f(x_r)<f(x_h)){
+      x_new <- (1+beta) * x_c - beta * x_h
+      type <- "C" 
+    }
+    
+    x_list[[argmax(f, x_list)]] <- x_new
+    
+    helper_sum <- 0
+    for(i in (1:3)){
+      helper_sum <- helper_sum + (f(x_list[[i]]) -f(x_c))^2
+    }
+    
+    final_table <- rbind(final_table, (list(iteration, x_c[1], x_c[2], x_h[1], x_h[2], x_l[1], x_l[2], x_new[1], x_new[2], f(x_new), type)))
+    iteration <- iteration + 1
+    
+    if(sqrt(helper_sum/3)<epsilon){
+      print(final_table)
+      print(paste("X coordinate of x_bar: " ,x_c[1], "Y coordinate of x_bar: ", x_c[2]))
+      print(paste("f(x_bar): " ,f(x_c)))
+      
+      break
+    }
+  }
+} 
+
+alpha = 1
+beta = 0.5
+gama = 2
+epsilon = 0.005
+
+simplex(alpha, beta, gama, epsilon, f, x_list, final_table)
+
+```
+
+
+In second set, epsilon=0.005 and x1=(1,10), x2=(20,0) and x3=(5,5).
+Here is the solution:
+
+```{r simplex2}
+
+
+x1 <- c(1,10)
+x2 <- c(20,0)
+x3 <- c(5,5)
+x_list <- list(x1,x2,x3)
+simplex(alpha, beta, gama, epsilon, f, x_list, final_table)
+
+
+```
