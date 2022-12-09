@@ -1,4 +1,4 @@
-# PROGRESS JOURNAL
+# PORTFOLIO
 
 ## Time Series Analysis and Forecasting Project
 
