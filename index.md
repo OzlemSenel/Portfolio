@@ -32,9 +32,9 @@
 
 ### Finding Local Minimum with Several Methods - 1
 
-[In this homework](Files/IE440/440hw--1-) the local minimum is found with these 4 methods: Bisection Method, Golden Section Method, Newton’s Method, Secant Method.
+[In this homework](Files/IE440/440hw--1-.html) the local minimum is found with these 4 methods: Bisection Method, Golden Section Method, Newton’s Method, Secant Method.
 
-[Here](Files/IE440/440hw (1)) is the RMarkdown of our homework.
+[Here](Files/IE440/440hw (1).Rmd) is the RMarkdown of our homework.
 
 ### Finding Local Minimum with Several Methods - 2
 
@@ -44,6 +44,6 @@
 
 ### Finding Local Minimum with Several Methods - 3
 
-[In this homework](Files/IE440/IE440-HW4--2-) the local minimum is found with these 3 methods: Newton’s Method (with exact line search), DFP (Davidon - Fletcher - Powell) Method, BFGS (Broyden - Fletcher - Goldfarb - Shanno) Method.
+[In this homework](Files/IE440/IE440-HW4--2-.html) the local minimum is found with these 3 methods: Newton’s Method (with exact line search), DFP (Davidon - Fletcher - Powell) Method, BFGS (Broyden - Fletcher - Goldfarb - Shanno) Method.
 
-[Here](Files/IE440/IE440-HW4 (2)) is the RMarkdown of our homework.
+[Here](Files/IE440/IE440-HW4 (2).Rmd) is the RMarkdown of our homework.
