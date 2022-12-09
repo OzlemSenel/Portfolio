@@ -180,7 +180,7 @@ There is an increasing trend over the years but the fluctuations are getting big
 It can be said that there is a compatibility between the CPI for food industry and the search volume of 'ekmek fiyatı'. Because they are both has an increasing trend.
 
 
-In order to have a better observation, you can reach  my RMarkdown file from [here](Files/360hw1.Rmd).
+In order to have a better observation, you can reach  my RMarkdown file from [here](Portfolio/Files/360hw1.Rmd).
 
 ## References
 + [EVDS](https://evds2.tcmb.gov.tr/index.php)
