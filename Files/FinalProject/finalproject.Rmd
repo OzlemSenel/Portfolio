@@ -3784,6 +3784,3 @@ Approaching differently to each product is one of the strong sides of the model,
 
 Lecture Notes
 
-# RMD 
- The code of my study is available from [here](https://bu-ie-360.github.io/spring21-OzlemSenel/Files/FinalProject/finalproject.Rmd)
-
