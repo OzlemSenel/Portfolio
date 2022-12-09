@@ -2,7 +2,7 @@
 
 ## Time Series Analysis and Forecasting Project
 
-[Here](Files/FinalProject/finalproject) is our project about Trendyol Product Sale Forecasting.
+[Here](Files/FinalProject/finalproject.html) is our project about Trendyol Product Sale Forecasting.
 
 ## Data Mining Project
 
@@ -12,23 +12,19 @@
 
 ### Examples
 
-[Here](Files/IE360_Spring21_Homework0) is my 5 interesting R examples.
+[Here](Files/IE360_Spring21_Homework0.html) is my 5 interesting R examples.
 
 ### Data Visualizations
 
-[Here](Files/360hw1) is my data visualizations for 3 time series.
+[Here](Files/360hw1.html) is my data visualizations for 3 time series.
 
 ### Forecasting with Regression
 
-[Here](Files/IE360_hw2) is my forecasting with time series regression.
+[Here](Files/IE360_hw2.html) is my forecasting with time series regression.
 
 ### Forecasting with AR and MA
 
-[Here](Files/hw3_360) is my forecasting with AR and MA models.
-
-### Forecasting with ARIMA
-
-[Here](Files/homework4-5) is my forecasting with ARIMA models about Trendyol Product Sales.
+[Here](Files/hw3_360.html) is my forecasting with AR and MA models.
 
 ### Finding Local Minimum with Several Methods - 1
 
