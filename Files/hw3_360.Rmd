@@ -249,8 +249,6 @@ print(paste(" Weighted Mean Absolute Percentage Error : ",weighted_mape))
 
 I decomposed my series and created an ARIMA model. After that, I predicted next 14 days. Looking at my predictions and my error values, I did a good job except religious holidays.
 
-You can reach my related code from [here](https://bu-ie-360.github.io/spring21-OzlemSenel/Files/hw3_360.Rmd).
-
 
 ## References
 
