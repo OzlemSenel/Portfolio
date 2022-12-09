@@ -210,7 +210,7 @@ In this assignment, I made a time series regression for my selected data and mad
 First of all, I made squareroots of the data, I selected relevant predictors to the model, I added necessary variables to improve my model. My R-squared value was  increasing as I work with the model.After my model is good enough for forecasting, I predicted the April value with my model.
 
 
-You can reach my related code from [here](https://bu-ie-360.github.io/spring21-OzlemSenel/Files/IE_360hw2.Rmd).
+You can reach my related code from [here](https://github.io/OzlemSenel/Portfolio/Files/IE_360hw2.Rmd).
 
 
 
