@@ -20,9 +20,14 @@
 
 [Here](Files/425-project-markdown-final (1).Rmd) is the RMarkdown of our project.
 
-### Examples of Forecasting Applications with R
+## TSP for 15 and 81 cities of Turkey with GUROBI
 
-[Here](Files/IE360_Spring21_Homework0.html) is my 5 interesting R examples.
+[Here](Files/TSP/TSP_report.pdf) is the report of my project.
+
+[Here)(Files/TSP/313_assignment3_15-2.ipynb) is the code of my project for 15 cities.
+
+[Here)(Files/TSP/313_assignment3_81.ipynb) is the code of my project for 81 cities.
+
 
 ### Data Visualizations
 
