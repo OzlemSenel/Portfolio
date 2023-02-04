@@ -2,8 +2,11 @@
 
 ## Senior Year Project: Prostate Cancer Prediction with Classification Algorithms
 
-[Here](index.html) is our project about prostate cancer with machine learning algorithms.
-[Here] 
+[Here](Files/Prostate_Cancer_Prediction/index.html) is our project about prostate cancer with machine learning algorithms.
+
+[Here](Files/Prostate_Cancer_Prediction/492_project_report.ipynb) is the code of our project.
+
+[Here](Files/Prostate_Cancer_Prediction/data.csv) is the data that is used in this project.
 
 ## Time Series Analysis and Forecasting Project
 
@@ -17,7 +20,7 @@
 
 [Here](Files/425-project-markdown-final (1).Rmd) is the RMarkdown of our project.
 
-### Examples
+### Examples of Forecasting Applications with R
 
 [Here](Files/IE360_Spring21_Homework0.html) is my 5 interesting R examples.
 
