@@ -6,7 +6,7 @@
 
 [Here](Files/Prostate_Cancer_Prediction/492_project_report.ipynb) is the code of our project.
 
-[Here](Files/Prostate_Cancer_Prediction/data.csv) is the data that is used in this project.
+[Here](Files/Prostate_Cancer_Prediction/Data.csv) is the data that is used in this project.
 
 ## Time Series Analysis and Forecasting Project
 
